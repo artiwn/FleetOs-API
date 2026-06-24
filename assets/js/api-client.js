@@ -141,10 +141,38 @@ const FleetOSAuth = (() => {
     });
   }
 
+  function decodeJwtPayload(token = getAccessToken()) {
+    try {
+      const part = String(token || '').split('.')[1];
+      if (!part) return null;
+      const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');
+      return JSON.parse(decodeURIComponent(escape(atob(padded))));
+    } catch (e) {
+      try {
+        const part = String(token || '').split('.')[1];
+        if (!part) return null;
+        const normalized = part.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=');
+        return JSON.parse(atob(padded));
+      } catch (fallbackError) { return null; }
+    }
+  }
+
+  function getJwtClaims() { return decodeJwtPayload(getAccessToken()) || {}; }
+
+  function readRoleFromClaims(claims = getJwtClaims()) {
+    return claims.role
+      || claims.roles
+      || claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role']
+      || claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role']
+      || '';
+  }
+
   function getAccessToken() { return localStorage.getItem(ACCESS_TOKEN_KEY) || ''; }
   function getRefreshToken() { return localStorage.getItem(REFRESH_TOKEN_KEY) || ''; }
   function getUser() { try { return JSON.parse(localStorage.getItem(USER_KEY) || 'null'); } catch (e) { return null; } }
-  function getSession() { return { accessToken: getAccessToken(), refreshToken: getRefreshToken(), user: getUser(), expiresAt: localStorage.getItem(EXPIRES_AT_KEY) || '' }; }
+  function getSession() { return { accessToken: getAccessToken(), refreshToken: getRefreshToken(), user: getUser(), claims: getJwtClaims(), role: readRoleFromClaims(), expiresAt: localStorage.getItem(EXPIRES_AT_KEY) || '' }; }
   function isAuthenticated() { return Boolean(getAccessToken()); }
 
   function logout(redirect = true) {
@@ -158,7 +186,7 @@ const FleetOSAuth = (() => {
     }
   }
 
-  return { login, register, refresh, me, validate, logout, request, getAccessToken, getRefreshToken, getUser, getSession, isAuthenticated };
+  return { login, register, refresh, me, validate, logout, request, getAccessToken, getRefreshToken, getUser, getSession, getJwtClaims, readRoleFromClaims, decodeJwtPayload, isAuthenticated };
 })();
 
 const FleetAPI = (() => {

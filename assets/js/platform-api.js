@@ -85,6 +85,14 @@ const FleetOSPlatformAPI = (() => {
     }
   }
 
+
+  const auth = {
+    me: () => FleetOSAuth.me(),
+    validate: () => FleetOSAuth.validate(),
+    refresh: () => FleetOSAuth.refresh(),
+    session: () => FleetOSAuth.getSession()
+  };
+
   const live = {
     plants: () => FleetAPI.request('/api/plants'),
     devices: () => FleetAPI.request('/api/devices'),
@@ -140,6 +148,13 @@ const FleetOSPlatformAPI = (() => {
   };
 
   const endpointCatalog = [
+    // Auth API — session/user checks. Login/register stay manual because they require credentials or create users.
+    { group: 'Auth', label: 'Current User', method: 'GET', path: '/api/Auth/me', safe: true, used: true, notes: 'Returns current authenticated user/profile. Safe automatic check.' },
+    { group: 'Auth', label: 'Validate Token', method: 'POST', path: '/api/Auth/validate', safe: true, used: true, notes: 'Validates current Bearer token. Safe automatic check.' },
+    { group: 'Auth', label: 'Refresh Token', method: 'POST', path: '/api/Auth/refresh', safe: false, used: true, notes: 'Manual only. Refreshes auth session and may replace stored token.' },
+    { group: 'Auth', label: 'Login', method: 'POST', path: '/api/Auth/login', safe: false, used: true, notes: 'Manual only. Login page already uses this endpoint.' },
+    { group: 'Auth', label: 'Register', method: 'POST', path: '/api/Auth/register', safe: false, used: false, notes: 'Manual only. Creates a new user/account.' },
+
     // Platform Live API — read-only normalized live data
     { group: 'Platform Live API', label: 'Live Plants', method: 'GET', path: '/api/plants', safe: true, used: true, notes: 'Returns normalized plant list. Safe automatic check.' },
     { group: 'Platform Live API', label: 'Live Devices', method: 'GET', path: '/api/devices', safe: true, used: true, notes: 'Returns normalized device list. Safe automatic check.' },
@@ -210,6 +225,7 @@ const FleetOSPlatformAPI = (() => {
   }
 
   return {
+    auth,
     live,
     tenants,
     clients,

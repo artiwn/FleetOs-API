@@ -1,5 +1,7 @@
 let fleetosApiResults = [];
 let fleetosManualResult = null;
+let fleetosAuthResult = null;
+let fleetosJobResult = null;
 
 function escapeHtml(value) {
   return String(value ?? '')
@@ -86,6 +88,10 @@ function buildBackendReport(results) {
   lines.push(`Authenticated: ${FleetOSAuth.isAuthenticated() ? 'yes' : 'no'}`);
   const user = FleetOSAuth.getUser();
   if (user) lines.push(`User: ${user.username || user.email || JSON.stringify(user)}`);
+  const session = FleetOSAuth.getSession?.() || {};
+  if (session.role) lines.push(`Role: ${session.role}`);
+  if (session.claims?.iss) lines.push(`Issuer: ${session.claims.iss}`);
+  if (session.claims?.aud) lines.push(`Audience: ${session.claims.aud}`);
   lines.push('');
   lines.push('SUMMARY');
   lines.push(`OK: ${results.filter(r => r.ok).length}`);
@@ -134,6 +140,29 @@ function renderApiConsole() {
 
   <section class="panel glass-card">
     <div class="panel-head">
+      <div><h2>Auth API & Session</h2><p>Checks the currently stored Bearer token against Auth API. Refresh is available manually and will update the saved session if backend returns a new token.</p></div>
+      <div class="toolbar"><button class="secondary-action" id="runAuthMe" type="button">GET /me</button><button class="secondary-action" id="runAuthValidate" type="button">POST /validate</button><button class="secondary-action" id="runAuthRefresh" type="button">POST /refresh</button></div>
+    </div>
+    <div class="metric-grid compact api-metrics" id="authSessionSummary"></div>
+    <div id="authApiResult" class="api-check-grid"></div>
+  </section>
+
+  <section class="panel glass-card">
+    <div class="panel-head"><div><h2>Job Trigger</h2><p>Controlled manual execution for <code>/api/JobTrigger/run/{jobName}</code>. Use only a job name confirmed by backend.</p></div></div>
+    <div class="form-grid three-cols">
+      <label class="span-2">Job Name
+        <input id="jobTriggerName" placeholder="example-sync-job" />
+      </label>
+      <label>Mode
+        <input value="Manual only" disabled />
+      </label>
+    </div>
+    <div class="toolbar"><button class="danger-action" id="runJobTrigger" type="button">Run job trigger</button><button class="secondary-action" id="clearJobTrigger" type="button">Clear job result</button></div>
+    <div id="jobTriggerResult" class="api-check-grid"></div>
+  </section>
+
+  <section class="panel glass-card">
+    <div class="panel-head">
       <div><h2>Safe Endpoint Health</h2><p>Automatic check for safe concrete endpoints. All admin/platform Swagger endpoints are listed below; endpoints with ids or write actions stay manual to avoid changing backend data.</p></div>
       <div class="toolbar"><button class="secondary-action" id="copyBackendReport" type="button">Copy backend report</button><button class="secondary-action" id="clearApiResults" type="button">Clear</button></div>
     </div>
@@ -175,7 +204,73 @@ async function wireApiConsole() {
   const status = document.getElementById('apiConsoleStatus');
   const resultsEl = document.getElementById('apiConsoleResults');
   const groupEl = document.getElementById('apiGroupSummary');
-  const reportOutput = document.getElementById('backendReportOutput');
+  const authSummary = document.getElementById('authSessionSummary');
+  const authResultEl = document.getElementById('authApiResult');
+  const jobResultEl = document.getElementById('jobTriggerResult');
+
+  function renderAuthSessionSummary() {
+    const session = FleetOSAuth.getSession?.() || {};
+    const claims = session.claims || {};
+    const user = FleetOSAuth.getUser?.() || {};
+    const exp = claims.exp ? new Date(Number(claims.exp) * 1000).toLocaleString() : (session.expiresAt || '—');
+    if (!authSummary) return;
+    authSummary.innerHTML = `
+      <div><span>User</span><strong>${escapeHtml(user.username || claims.unique_name || claims.email || '—')}</strong></div>
+      <div><span>Role</span><strong>${escapeHtml(session.role || '—')}</strong></div>
+      <div><span>Issuer</span><strong>${escapeHtml(claims.iss || '—')}</strong></div>
+      <div><span>Expires</span><strong>${escapeHtml(exp)}</strong></div>
+    `;
+  }
+
+  async function runAuthEndpoint(kind) {
+    if (!authResultEl) return;
+    authResultEl.innerHTML = '<article class="glass-card api-check-card"><strong>Checking Auth API...</strong></article>';
+    let result;
+    if (kind === 'me') {
+      result = await FleetOSPlatformAPI.rawRequest('/api/Auth/me', { method: 'GET' });
+      result.label = 'Current User';
+      result.group = 'Auth';
+      result.notes = 'GET /api/Auth/me using current Bearer token.';
+      if (result.ok && result.data) localStorage.setItem('fleetos_auth_user', JSON.stringify(result.data?.user || result.data?.data || result.data?.result || result.data));
+    } else if (kind === 'validate') {
+      result = await FleetOSPlatformAPI.rawRequest('/api/Auth/validate', { method: 'POST' });
+      result.label = 'Validate Token';
+      result.group = 'Auth';
+      result.notes = 'POST /api/Auth/validate using current Bearer token.';
+    } else {
+      try {
+        const before = FleetOSAuth.getAccessToken?.() || '';
+        const data = await FleetOSAuth.refresh();
+        const after = FleetOSAuth.getAccessToken?.() || '';
+        result = { ok: true, status: 200, statusText: 'OK', ms: 0, path: '/api/Auth/refresh', method: 'POST', source: FleetOSPlatformAPI.rawRequest ? (FleetOSConfig.isLocalFrontend() ? 'Local proxy' : 'Vercel proxy') : 'Auth API', count: null, data: { refreshed: true, tokenChanged: Boolean(after && before !== after), session: data }, label: 'Refresh Token', group: 'Auth', notes: 'POST /api/Auth/refresh. Stored session updated when backend returns a new token.' };
+      } catch (error) {
+        result = { ok: false, status: 0, statusText: 'Refresh failed', ms: 0, path: '/api/Auth/refresh', method: 'POST', source: FleetOSConfig.isLocalFrontend() ? 'Local proxy' : 'Vercel proxy', count: null, data: null, bodyText: '', error: error.message, label: 'Refresh Token', group: 'Auth', notes: 'POST /api/Auth/refresh failed.' };
+      }
+    }
+    fleetosAuthResult = result;
+    renderAuthSessionSummary();
+    authResultEl.innerHTML = apiResultCard(result, 0);
+  }
+
+  async function runJobTrigger() {
+    if (!jobResultEl) return;
+    const jobName = (document.getElementById('jobTriggerName')?.value || '').trim();
+    if (!jobName) {
+      jobResultEl.innerHTML = '<article class="glass-card api-check-card"><p class="api-error">Job name is required. Ask backend for the exact jobName first.</p></article>';
+      return;
+    }
+    if (!confirm(`Run backend job "${jobName}" now?`)) return;
+    jobResultEl.innerHTML = '<article class="glass-card api-check-card"><strong>Running job trigger...</strong></article>';
+    const path = `/api/JobTrigger/run/${encodeURIComponent(jobName)}`;
+    const result = await FleetOSPlatformAPI.rawRequest(path, { method: 'POST' });
+    result.label = `Run Job: ${jobName}`;
+    result.group = 'Platform Operations';
+    result.notes = 'Manual JobTrigger result. Use this only for backend-approved job names.';
+    fleetosJobResult = result;
+    jobResultEl.innerHTML = apiResultCard(result, 0);
+  }
+
+  renderAuthSessionSummary();
 
   async function run() {
     status.innerHTML = '<strong>Checking...</strong><small>Requests are running through proxy and Bearer token.</small>';
@@ -244,6 +339,14 @@ async function wireApiConsole() {
     fleetosManualResult = null;
     const manualEl = document.getElementById('manualApiResult');
     if (manualEl) manualEl.innerHTML = '';
+  });
+  document.getElementById('runAuthMe')?.addEventListener('click', () => runAuthEndpoint('me'));
+  document.getElementById('runAuthValidate')?.addEventListener('click', () => runAuthEndpoint('validate'));
+  document.getElementById('runAuthRefresh')?.addEventListener('click', () => runAuthEndpoint('refresh'));
+  document.getElementById('runJobTrigger')?.addEventListener('click', runJobTrigger);
+  document.getElementById('clearJobTrigger')?.addEventListener('click', () => {
+    fleetosJobResult = null;
+    if (jobResultEl) jobResultEl.innerHTML = '';
   });
 
   run();

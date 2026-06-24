@@ -45,7 +45,8 @@ const FleetLayout = (() => {
   const nav = [
     { section: 'Dashboard', items: [
       { icon: '🏠', label: 'Platform Overview', href: basePath + 'index.html', key: 'index.html' },
-      { icon: '🔗', label: 'Platform API Console', href: basePath + 'pages/api-console.html', key: 'api-console.html' }
+      { icon: '🔗', label: 'Platform API Console', href: basePath + 'pages/api-console.html', key: 'api-console.html' },
+      { icon: '🛰️', label: 'Vendor API Console', href: basePath + 'pages/vendor-api-console.html', key: 'vendor-api-console.html' }
     ] },
     { section: 'Tenant Management', items: tenantManagementItems },
     { section: 'Integration Governance', items: [
@@ -161,6 +162,19 @@ const FleetLayout = (() => {
     return String(currentUserLabel()).split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase() || 'GA';
   }
 
+  function currentUserRole() {
+    const session = window.FleetOSAuth?.getSession?.() || {};
+    const user = window.FleetOSAuth?.getUser?.() || {};
+    return user.role || user.userRole || user.roleName || session.role || 'GlobalAdmin';
+  }
+
+  function currentUserEmail() {
+    const session = window.FleetOSAuth?.getSession?.() || {};
+    const claims = session.claims || {};
+    const user = window.FleetOSAuth?.getUser?.() || {};
+    return user.email || claims.email || claims.unique_name || '';
+  }
+
   function header() {
     return `
       <header class="topbar">
@@ -200,9 +214,10 @@ const FleetLayout = (() => {
             </div>
           </div>
           <div class="menu-wrap">
-            <button class="profile-btn" id="profileBtn"><span class="avatar">${currentUserInitials()}</span><span>${currentUserLabel()}</span>▾</button>
+            <button class="profile-btn" id="profileBtn"><span class="avatar" id="profileAvatar">${currentUserInitials()}</span><span id="profileName">${currentUserLabel()}</span>▾</button>
             <div class="dropdown-menu wide" id="profileMenu">
-              <div class="dropdown-title">Global Admin</div>
+              <div class="dropdown-title"><strong id="profileMenuName">${currentUserLabel()}</strong><small id="profileMenuRole">${currentUserRole()}${currentUserEmail() ? ' · ' + currentUserEmail() : ''}</small></div>
+              <button data-action="refresh-auth">🔐 Refresh Auth Profile</button>
               <button data-action="users">👤 RBAC / Access Scope</button>
               <button data-action="settings">⚙️ Platform Settings</button>
               <button data-action="audit">🧾 Audit Center</button>
@@ -293,6 +308,32 @@ const FleetLayout = (() => {
     document.querySelectorAll('.dropdown-menu.open').forEach(x => { if (x.id !== except) x.classList.remove('open'); });
   }
 
+  function updateAuthProfileUi() {
+    const name = currentUserLabel();
+    const role = currentUserRole();
+    const email = currentUserEmail();
+    const avatar = currentUserInitials();
+    const profileName = document.getElementById('profileName');
+    const profileAvatar = document.getElementById('profileAvatar');
+    const profileMenuName = document.getElementById('profileMenuName');
+    const profileMenuRole = document.getElementById('profileMenuRole');
+    if (profileName) profileName.textContent = name;
+    if (profileAvatar) profileAvatar.textContent = avatar;
+    if (profileMenuName) profileMenuName.textContent = name;
+    if (profileMenuRole) profileMenuRole.textContent = `${role}${email ? ' · ' + email : ''}`;
+  }
+
+  async function hydrateAuthProfile() {
+    if (!window.FleetOSAuth?.isAuthenticated?.()) return;
+    updateAuthProfileUi();
+    try {
+      await window.FleetOSAuth.me();
+      updateAuthProfileUi();
+    } catch (error) {
+      // Keep local JWT claims/profile if /me is unavailable.
+    }
+  }
+
   function wireHeader() {
     document.getElementById('toggleSidebar')?.addEventListener('click', () => document.body.classList.toggle('sidebar-collapsed'));
     document.getElementById('goHome')?.addEventListener('click', () => {
@@ -330,9 +371,20 @@ const FleetLayout = (() => {
       const b = e.target.closest('button[data-action]'); if (!b) return;
       window.location.href = pathFor(b.dataset.action);
     });
-    document.getElementById('profileMenu')?.addEventListener('click', e => {
+    document.getElementById('profileMenu')?.addEventListener('click', async e => {
       const b = e.target.closest('button[data-action]'); if (!b) return;
       if (b.dataset.action === 'logout') { window.FleetOSAuth?.logout?.(true); return; }
+      if (b.dataset.action === 'refresh-auth') {
+        try {
+          await window.FleetOSAuth?.me?.();
+          updateAuthProfileUi();
+          toast('Auth profile refreshed');
+        } catch (error) {
+          toast(`Auth profile error: ${error.message || error}`);
+        }
+        closeMenus();
+        return;
+      }
       window.location.href = pathFor(b.dataset.action);
     });
 
@@ -637,6 +689,7 @@ const FleetLayout = (() => {
     const app = document.getElementById('app');
     app.innerHTML = `${sidebar()}<div class="workspace">${header()}<main class="main-content">${content}</main></div>`;
     wireHeader();
+    hydrateAuthProfile();
     wireSidebarScrollMemory();
     wireActionMenus();
     const main = app.querySelector('.main-content');
