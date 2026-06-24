@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/Auth/:path*",
+      "destination": "https://fleetosauth.unisys.am/api/Auth/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://fleetosapi.unisys.am/api/:path*"
+    }
+  ]
+}

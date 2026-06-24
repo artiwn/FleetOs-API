@@ -1,0 +1,14 @@
+{
+  "name": "fleetos-global-admin-prototype",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node proxy-server.js",
+    "proxy": "node proxy-server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1"
+  }
+}

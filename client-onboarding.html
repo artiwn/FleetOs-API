@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FleetOS — Tenant Onboarding</title>
+  <style>
+    :root{--bg:#07111f;--panel:#0d1b2f;--panel2:#101f36;--line:rgba(148,163,184,.18);--text:#e5eef9;--muted:#91a2b8;--cyan:#22d3ee;--blue:#60a5fa;--green:#34d399;--yellow:#fbbf24;--red:#fb7185;--shadow:0 24px 80px rgba(0,0,0,.34);}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(circle at top left,rgba(34,211,238,.13),transparent 34%),linear-gradient(180deg,#081426,#050b14);color:var(--text);} 
+    .public-shell{max-width:1180px;margin:0 auto;padding:34px 20px 54px;}
+    .public-header{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:26px;}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:-.03em}.brand-mark{width:38px;height:38px;border-radius:13px;display:grid;place-items:center;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#06111f;box-shadow:0 12px 34px rgba(34,211,238,.22)}
+    .secure-badge{display:flex;align-items:center;gap:10px;border:1px solid rgba(52,211,153,.24);background:rgba(52,211,153,.08);padding:10px 13px;border-radius:999px;color:#c8f7e3;font-size:13px;}
+    .hero{display:grid;grid-template-columns:1.05fr .95fr;gap:22px;align-items:stretch;margin-bottom:22px;}
+    .card{background:linear-gradient(180deg,rgba(16,31,54,.9),rgba(9,20,37,.82));border:1px solid var(--line);border-radius:28px;box-shadow:var(--shadow);padding:24px;}
+    .eyebrow{margin:0 0 10px;color:var(--cyan);text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:900}.hero h1{font-size:42px;line-height:1;margin:0 0 12px;letter-spacing:-.05em}.muted{color:var(--muted);line-height:1.55}.summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:18px}.summary-grid div{min-height:84px;border:1px solid rgba(148,163,184,.12);border-radius:18px;background:rgba(255,255,255,.035);padding:14px}.summary-grid span{display:block;color:var(--muted);font-size:12px;margin-bottom:7px}.summary-grid strong{font-size:16px}
+    .steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}.steps button{border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.035);color:#cbd8e7;border-radius:999px;padding:10px 13px;font-weight:800}.steps button.active{color:#06111f;background:linear-gradient(135deg,var(--cyan),var(--blue));border-color:transparent}
+    form{display:grid;gap:16px}.step{display:none}.step.active{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.full{grid-column:1/-1}label{display:grid;gap:7px;color:#cbd8e7;font-size:13px;font-weight:800}input,select,textarea{width:100%;min-height:44px;border-radius:14px;border:1px solid rgba(148,163,184,.18);background:rgba(7,17,31,.78);color:var(--text);padding:0 13px;outline:none}textarea{min-height:96px;padding:13px;resize:vertical}input[type=file]{padding:11px;height:auto}.check{display:flex;align-items:center;gap:10px;min-height:44px;border:1px solid rgba(148,163,184,.14);background:rgba(255,255,255,.035);border-radius:14px;padding:10px 12px}.check input{width:18px;min-height:18px}.actions{display:flex;justify-content:space-between;gap:12px;align-items:center;border-top:1px solid var(--line);padding-top:18px;margin-top:6px}button{min-height:42px;border-radius:13px;border:1px solid rgba(148,163,184,.18);background:rgba(15,28,49,.86);color:#dce9f7;padding:0 15px;font-weight:850;cursor:pointer}.primary{background:linear-gradient(135deg,var(--cyan),var(--blue));border:0;color:#06111f}.ghost{background:transparent}.success-panel{display:none;text-align:center;padding:38px}.success-icon{width:64px;height:64px;display:grid;place-items:center;margin:0 auto 16px;border-radius:22px;background:rgba(52,211,153,.16);color:#86efac;font-size:30px}.hint{font-size:12px;color:var(--muted);line-height:1.45}.doc-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.doc-grid label{border:1px dashed rgba(148,163,184,.18);border-radius:16px;padding:12px;background:rgba(255,255,255,.025)}.contact-list{display:grid;gap:14px}.contact-card{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;border:1px solid rgba(148,163,184,.14);border-radius:20px;background:rgba(255,255,255,.025);padding:16px}.contact-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}.contact-head strong{font-size:14px}.remove-contact{min-height:34px;padding:0 11px;color:#fecdd3;border-color:rgba(251,113,133,.28);background:rgba(251,113,133,.08)}.add-contact{justify-self:start}.field-note{font-size:11px;color:var(--muted);font-weight:650}
+    @media(max-width:900px){.hero{grid-template-columns:1fr}.step.active,.contact-card{grid-template-columns:1fr}.doc-grid,.summary-grid{grid-template-columns:1fr}.public-header{align-items:flex-start;flex-direction:column}.hero h1{font-size:34px}}
+  </style>
+</head>
+<body>
+  <main class="public-shell">
+    <header class="public-header">
+      <div class="brand"><div class="brand-mark">F</div><div>FleetOS<br><span class="hint">Tenant onboarding</span></div></div>
+      <div class="secure-badge">● Secure external form · No admin dashboard access</div>
+    </header>
+
+    <section class="hero">
+      <div class="card">
+        <p class="eyebrow">Complete company profile</p>
+        <h1>Tenant onboarding form</h1>
+        <p class="muted">Please provide your legal, contact, portal and compliance information. FleetOS administrators will review your submission before creating the final tenant record.</p>
+        <div class="summary-grid" id="inviteSummary"></div>
+      </div>
+      <div class="card">
+        <p class="eyebrow">What happens next</p>
+        <div class="summary-grid">
+          <div><span>1</span><strong>Fill company data</strong><p class="hint">Legal identity, address, contacts and communication preferences.</p></div>
+          <div><span>2</span><strong>Upload documents</strong><p class="hint">Registration, tax, NDA, DPA or authorization files if required.</p></div>
+          <div><span>3</span><strong>Submit for review</strong><p class="hint">Your profile moves to the admin approval queue.</p></div>
+          <div><span>4</span><strong>Portal setup</strong><p class="hint">After approval, FleetOS can create portal access and related records.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="formCard">
+      <div class="steps" id="steps"></div>
+      <form id="onboardingForm">
+        <div class="step active" data-step="0">
+          <label>Legal Name <input name="legalName" required placeholder="ABC Solar Energy LLC" /></label>
+          <label>Trade Name <input name="tradeName" placeholder="ABC Solar" /></label>
+          <label>Registration Number <input name="registrationNumber" required /></label>
+          <label>Tax ID / VAT Number <input name="taxId" required /></label>
+          <label>Tenant Type
+            <select name="tenantType"><option>Owner</option><option>Operator</option><option>Investor</option><option>EPC</option><option>O&M</option><option>Utility</option></select>
+          </label>
+          <label>Webplant <input name="webplant" type="url" placeholder="https://..." /></label>
+        </div>
+        <div class="step" data-step="1">
+          <label>Legal Country <input name="country" required /></label>
+          <label>State / Region <input name="region" /></label>
+          <label>City <input name="city" required /></label>
+          <label>Street Address <input name="street" required /></label>
+          <label>Building Number <input name="building" /></label>
+          <label>Postal Code <input name="postalCode" /></label>
+          <label class="check full"><input type="checkbox" name="sameAddress" checked /> Business address is the same as legal address</label>
+        </div>
+        <div class="step" data-step="2">
+          <div class="full contact-list" id="contactList">
+            <div class="contact-card" data-contact-card>
+              <div class="contact-head"><strong>Contact 1</strong><span class="hint">Primary contact is required</span></div>
+              <label>Contact Full Name <input name="contactName" data-contact-field="fullName" required /></label>
+              <label>Position <input name="contactPosition" data-contact-field="position" /></label>
+              <label>Department
+                <select name="department" data-contact-field="department"><option>Executive</option><option>Finance</option><option>Legal</option><option>Technical</option><option>Operations</option></select>
+              </label>
+              <label>Contact Role
+                <select name="contactRole" data-contact-field="role"><option>Primary</option><option>Billing</option><option>Legal</option><option>Technical</option><option>Commercial</option></select>
+              </label>
+              <label>Email <input name="email" data-contact-field="email" type="email" required /></label>
+              <label>Mobile Phone <input name="phone" data-contact-field="phone" type="tel" required /></label>
+              <label>Preferred Language <select name="language" data-contact-field="language"><option>English</option><option>Armenian</option><option>Russian</option></select></label>
+              <label>Preferred Contact Method <select name="contactMethod" data-contact-field="contactMethod"><option>Email</option><option>Phone</option><option>Portal</option></select></label>
+            </div>
+          </div>
+          <button type="button" class="add-contact full" id="addContactBtn">+ Add another contact</button>
+          <p class="hint full">Add billing, legal, technical or commercial contacts if different people should receive FleetOS communications.</p>
+        </div>
+        <div class="step" data-step="3">
+          <label>Portal Enabled <select name="portalEnabled"><option>Yes</option><option>No</option></select></label>
+          <label>Default User Role <select name="defaultRole"><option>Viewer</option><option>Manager</option><option>Admin</option></select></label>
+          <label>Maximum Users <input name="maxUsers" type="number" min="1" value="5" /></label>
+          <label>User Provisioning <select name="provisioning"><option>Manual</option><option>Automatic</option></select></label>
+          <label>Preferred Time Zone
+            <select name="timezone" required>
+              <option value="Asia/Yerevan">Armenia — Asia/Yerevan (UTC+4)</option>
+              <option value="Europe/Berlin">Central Europe — Europe/Berlin</option>
+              <option value="Europe/Madrid">Spain — Europe/Madrid</option>
+              <option value="Europe/London">United Kingdom — Europe/London</option>
+              <option value="Asia/Dubai">UAE — Asia/Dubai</option>
+              <option value="Asia/Tbilisi">Georgia — Asia/Tbilisi</option>
+              <option value="UTC">UTC</option>
+            </select>
+            <span class="field-note">Choose your business location. FleetOS will store the technical timezone code automatically.</span>
+          </label>
+          <label>Business Hours
+            <select name="businessHours" required>
+              <option>09:00–18:00, Monday–Friday</option>
+              <option>08:00–17:00, Monday–Friday</option>
+              <option>10:00–19:00, Monday–Friday</option>
+              <option>09:00–17:00, Monday–Friday</option>
+              <option>09:00–18:00, Monday–Saturday</option>
+              <option>24/7 operations</option>
+            </select>
+          </label>
+          <label class="check"><input type="checkbox" name="platformNotifications" checked /> Receive platform notifications</label>
+          <label class="check"><input type="checkbox" name="invoiceNotifications" checked /> Receive invoice notifications</label>
+        </div>
+        <div class="step" data-step="4">
+          <label>Data Processing Agreement <select name="dpa"><option>Signed</option><option>Not Signed</option></select></label>
+          <label>NDA Status <select name="nda"><option>Signed</option><option>Not Signed</option></select></label>
+          <label>Confidentiality Level <select name="confidentiality"><option>Standard</option><option>Restricted</option><option>Critical</option></select></label>
+          <label>Consent Expiry Date <input name="consentExpiry" type="date" /></label>
+          <div class="doc-grid full">
+            <label>Registration Certificate <input name="registrationFile" type="file" /></label>
+            <label>Tax Registration <input name="taxFile" type="file" /></label>
+            <label>NDA <input name="ndaFile" type="file" /></label>
+            <label>Power of Attorney <input name="poaFile" type="file" /></label>
+          </div>
+          <label class="full">Additional Notes <textarea name="notes" placeholder="Anything the FleetOS team should know"></textarea></label>
+        </div>
+        <div class="actions full">
+          <button type="button" class="ghost" id="prevBtn">Back</button>
+          <div>
+            <button type="button" id="nextBtn">Next</button>
+            <button type="submit" class="primary" id="submitBtn" style="display:none">Submit for approval</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="card success-panel" id="successPanel">
+      <div class="success-icon">✓</div>
+      <h2>Submitted for approval</h2>
+      <p class="muted">Your company profile has been sent to FleetOS administrators. You do not need access to the admin dashboard.</p>
+    </section>
+  </main>
+
+  <script>
+    const KEY_INVITES = 'fleetos_tenant_invites_v1';
+    const read = (key, fallback) => JSON.parse(localStorage.getItem(key) || JSON.stringify(fallback));
+    const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+    const params = new URLSearchParams(location.search);
+    const token = params.get('token') || '';
+    let invites = read(KEY_INVITES, []);
+    let invite = invites.find(i => i.token === token) || { token, tenantName:'New Tenant', email:'', country:'', tenantType:'Owner', status:'Direct form' };
+    const summary = document.getElementById('inviteSummary');
+    summary.innerHTML = `<div><span>Tenant</span><strong>${invite.tenantName || 'New Tenant'}</strong></div><div><span>Invitation status</span><strong>${invite.status || 'Invited'}</strong></div><div><span>Primary email</span><strong>${invite.email || '—'}</strong></div><div><span>Country</span><strong>${invite.country || '—'}</strong></div>`;
+    const form = document.getElementById('onboardingForm');
+    if(invite.email) form.email.value = invite.email;
+    if(invite.country) form.country.value = invite.country;
+    if(invite.tenantType) form.tenantType.value = invite.tenantType;
+    if(invite.tenantName) form.legalName.value = invite.tenantName;
+
+    const labels = ['Company','Address','Contacts','Portal','Compliance'];
+    let current = 0;
+    const stepsEl = document.getElementById('steps');
+    stepsEl.innerHTML = labels.map((l,i)=>`<button type="button" data-jump="${i}" class="${i===0?'active':''}">${i+1}. ${l}</button>`).join('');
+    function showStep(i){
+      current = Math.max(0, Math.min(labels.length-1, i));
+      document.querySelectorAll('.step').forEach(s => s.classList.toggle('active', Number(s.dataset.step) === current));
+      document.querySelectorAll('[data-jump]').forEach(b => b.classList.toggle('active', Number(b.dataset.jump) === current));
+      document.getElementById('prevBtn').style.visibility = current === 0 ? 'hidden' : 'visible';
+      document.getElementById('nextBtn').style.display = current === labels.length - 1 ? 'none' : 'inline-block';
+      document.getElementById('submitBtn').style.display = current === labels.length - 1 ? 'inline-block' : 'none';
+    }
+    document.querySelectorAll('[data-jump]').forEach(b => b.onclick = () => showStep(Number(b.dataset.jump)));
+    document.getElementById('prevBtn').onclick = () => showStep(current - 1);
+    document.getElementById('nextBtn').onclick = () => showStep(current + 1);
+    showStep(0);
+
+    function refreshContactNumbers(){
+      document.querySelectorAll('[data-contact-card]').forEach((card, index) => {
+        const title = card.querySelector('.contact-head strong');
+        if(title) title.textContent = `Contact ${index + 1}`;
+        const note = card.querySelector('.contact-head .hint');
+        if(note) note.textContent = index === 0 ? 'Primary contact is required' : 'Additional contact';
+        card.querySelectorAll('input, select').forEach(el => {
+          const base = el.getAttribute('data-contact-field') || el.name;
+          el.name = index === 0 ? (base === 'fullName' ? 'contactName' : base === 'role' ? 'contactRole' : base === 'phone' ? 'phone' : base) : `contact_${index}_${base}`;
+          if(index > 0) el.required = false;
+        });
+      });
+    }
+
+    function addContact(){
+      const list = document.getElementById('contactList');
+      const first = list.querySelector('[data-contact-card]');
+      const clone = first.cloneNode(true);
+      clone.querySelectorAll('input').forEach(input => input.value = '');
+      clone.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+      const head = clone.querySelector('.contact-head');
+      let remove = clone.querySelector('.remove-contact');
+      if(!remove){
+        remove = document.createElement('button');
+        remove.type = 'button';
+        remove.className = 'remove-contact';
+        remove.textContent = 'Remove';
+        head.appendChild(remove);
+      }
+      remove.onclick = () => { clone.remove(); refreshContactNumbers(); };
+      list.appendChild(clone);
+      refreshContactNumbers();
+    }
+
+    document.getElementById('addContactBtn').onclick = addContact;
+    refreshContactNumbers();
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const fileNames = ['registrationFile','taxFile','ndaFile','poaFile'].reduce((acc, name) => { const f = fd.get(name); if(f && f.name) acc[name] = f.name; return acc; }, {});
+      invites = read(KEY_INVITES, []);
+      const idx = invites.findIndex(i => i.token === token);
+      const payload = { ...(idx >= 0 ? invites[idx] : invite) };
+      for(const [key, value] of fd.entries()){
+        if(value instanceof File) continue;
+        payload[key] = value;
+      }
+      payload.contacts = Array.from(document.querySelectorAll('[data-contact-card]')).map(card => {
+        const contact = {};
+        card.querySelectorAll('[data-contact-field]').forEach(el => { contact[el.dataset.contactField] = el.value; });
+        return contact;
+      }).filter(c => c.fullName || c.email || c.phone);
+      payload.documents = fileNames;
+      payload.status = 'Submitted';
+      payload.submittedAt = new Date().toLocaleString();
+      payload.token = token || payload.token || `DIRECT-${Date.now()}`;
+      if(idx >= 0) invites[idx] = payload; else invites.unshift(payload);
+      write(KEY_INVITES, invites);
+      document.getElementById('formCard').style.display = 'none';
+      document.getElementById('successPanel').style.display = 'block';
+      window.scrollTo({top:0, behavior:'smooth'});
+    };
+  </script>
+  <script src="assets/js/fleetos-normalization.js"></script>
+  <script src="assets/js/ui-normalization-binding.js"></script>
+</body>
+</html>
