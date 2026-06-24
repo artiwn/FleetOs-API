@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FleetOS — Data Quality Center</title>
+  <link rel="stylesheet" href="../assets/css/styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell"></div>
+  <script src="../assets/js/data.js"></script>
+  <script src="../assets/js/api-client.js"></script><script src="../assets/js/platform-api.js"></script><script src="../assets/js/auth-guard.js"></script><script src="../assets/js/layout.js"></script>
+
+  <script>
+    const PATH_FIELDS = '../assets/data/FleetOS_UI_Field_Dictionary_v1.json';
+    const PATH_SCREENS = '../assets/data/FleetOS_UI_Screens_v1.json';
+    const PATH_ALERTS = '../assets/data/FleetOS_Canonical_Alerts_UI_Ready_v1.json';
+    const state = { tab:'overview', fields:null, screens:null, alerts:null };
+    function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+    function badge(v){const s=String(v||'').toLowerCase();return `<span class="badge ${s.includes('blocking')||s.includes('critical')?'danger':s.includes('review')||s.includes('warning')||s.includes('needs')?'warning':'success'}">${esc(v)}</span>`;}
+    async function init(){ const [f,s,a]=await Promise.all([fetch(PATH_FIELDS,{cache:'no-store'}).then(r=>r.json()), fetch(PATH_SCREENS,{cache:'no-store'}).then(r=>r.json()), fetch(PATH_ALERTS,{cache:'no-store'}).then(r=>r.json())]); state.fields=f; state.screens=s; state.alerts=a; render(); }
+    function fields(){return state.fields?.fields||[];} function screens(){return state.screens?.screens||[];} function alerts(){return state.alerts?.canonical_alerts||[];} function maps(){return state.alerts?.vendor_mappings||[];}
+    function issues(){
+      const badSynonyms = [
+        {id:'DQ-TERM-001', module:'UI Terminology', type:'Forbidden Synonym Control', records:'0 allowed', severity:'Blocking', status:'Controlled', action:'Use Plant / Device / Alert', detail:'Site, Station, Asset, Equipment and Alarm must not be used as primary UI labels where Plant, Device and Alert are defined by FleetOS dictionary.'},
+        {id:'DQ-UNIT-001', module:'Unit Normalization', type:'Temperature Display Unit', records:'0 non-canonical units allowed', severity:'Blocking', status:'Controlled', action:'Use °C', detail:'Temperature fields must display °C. Non-canonical temperature examples were removed from normalization workspaces.'},
+        {id:'DQ-FLD-001', module:'UI Dictionary', type:'Field Dictionary Coverage', records:fields().length, severity:'Healthy', status:'Active', action:'Monitor', detail:'All UI pages should use field key and UI label from UI Dictionary.'},
+        {id:'DQ-SCR-001', module:'UI Screens', type:'Screen Binding Coverage', records:screens().length, severity:'Healthy', status:'Active', action:'Monitor', detail:'Screen layouts are controlled by Screen Contract.'},
+        {id:'DQ-ALT-001', module:'Alert Normalization', type:'Vendor Mapping Coverage', records:maps().length, severity:'Healthy', status:'Active', action:'Monitor', detail:'Vendor alerts are mapped to canonical FleetOS alerts using Alert Mapping Registry.'},
+        {id:'DQ-ALT-002', module:'Alert Dictionary', type:'Canonical Alert Scope', records:alerts().length, severity:'Healthy', status:'Fixed v1', action:'Protect Scope', detail:'FleetOS v1 uses 28 canonical alert buckets to keep the alert taxonomy controllable.'}
+      ]; return badSynonyms;
+    }
+    function tabs(){return `<aside class="glass-card production-side-card-v92"><h3>Data Quality</h3>${[['overview','Overview'],['checks','Quality Checks'],['coverage','Dictionary Coverage'],['rules','Governance Rules']].map(([id,label])=>`<button class="${state.tab===id?'active':''}" data-tab="${id}">${label}</button>`).join('')}</aside>`;}
+    function overview(){return `<div class="section-title-v17"><div><h2>Data Quality Center</h2><p class="muted">Quality checks are now aligned with the actual FleetOS normalization outputs, not unrelated mock queues.</p></div></div><section class="kpi-grid compact-kpis"><article class="kpi-card cyan"><span>UI Fields</span><strong>${fields().length}</strong><small>UI Dictionary</small></article><article class="kpi-card blue"><span>UI Screens</span><strong>${screens().length}</strong><small>Screen Contract</small></article><article class="kpi-card green"><span>Canonical Alerts</span><strong>${alerts().length}</strong><small>fixed v1 scope</small></article><article class="kpi-card yellow"><span>Vendor Mappings</span><strong>${maps().length}</strong><small>source alert mappings</small></article></section><div class="normalization-empty-grid"><article><strong>Terminology Quality</strong><small>Plant / Device / Alert labels must remain consistent across all screens.</small></article><article><strong>Unit Quality</strong><small>°C, kW, kWh, V, A, Hz and % must match field dictionary units.</small></article><article><strong>Alert Quality</strong><small>Every source vendor alert must keep vendor name/code/description/action separately.</small></article></div>`;}
+    function checks(){return `<div class="section-title-v17"><div><h2>Quality Checks</h2><p class="muted">Checks based on the normalization dictionaries loaded by the prototype.</p></div></div><div class="data-table"><div class="data-head quality-row-v96"><span>Check</span><span>Issue Type</span><span>Severity</span><span>Action</span><span>Detail</span></div>${issues().map(q=>`<div class="data-row quality-row-v96"><div><strong>${esc(q.id)}</strong><small>${esc(q.module)}</small></div><div><strong>${esc(q.type)}</strong><small>${esc(q.records)} records</small></div><div>${badge(q.severity)}<small>${esc(q.status)}</small></div><div><strong>${esc(q.action)}</strong><small>Owner: Data Governance</small></div><div><strong>${esc(q.detail).slice(0,110)}</strong><small>dictionary-controlled</small></div></div>`).join('')}</div>`;}
+    function coverage(){const byCat={}; fields().forEach(f=>{byCat[f.category||'uncategorized']=(byCat[f.category||'uncategorized']||0)+1;}); return `<div class="section-title-v17"><div><h2>Dictionary Coverage</h2><p class="muted">Current dictionary distribution by UI category.</p></div></div><div class="normalization-empty-grid">${Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<article><strong>${esc(k)}</strong><small>${v} fields</small></article>`).join('')}</div>`;}
+    function rules(){return `<div class="section-title-v17"><div><h2>Governance Rules</h2><p class="muted">Rules that frontend must follow when using normalized FleetOS dictionaries.</p></div></div><div class="check-list unified-check-list"><label class="check-row done"><input type="checkbox" checked><span><b>Use UI Dictionary labels</b><small>No local page label if field key exists.</small></span></label><label class="check-row done"><input type="checkbox" checked><span><b>Use Screen Dictionary structure</b><small>Screen field order and grouping should reference Screen Contract.</small></span></label><label class="check-row done"><input type="checkbox" checked><span><b>Use Alert Dictionary for all alert pages</b><small>Alert Dictionary and Incident Normalization must use the same normalized registry.</small></span></label><label class="check-row done"><input type="checkbox" checked><span><b>Preserve vendor details separately</b><small>Vendor code/name/description/action must not be merged into a single field.</small></span></label></div>`;}
+    function active(){return state.tab==='checks'?checks():state.tab==='coverage'?coverage():state.tab==='rules'?rules():overview();}
+    function render(){FleetLayout.mount(`<section class="page-hero"><div><p class="eyebrow">Global Admin · Data Governance</p><h1>Data Quality Center</h1><p class="muted">Quality controls for FleetOS normalization dictionaries, screen bindings, units and alert mappings.</p></div><button class="freshness-card" onclick="FleetLayout.toast('Data quality uses normalization layer')"><span class="pulse"></span><div><strong>Dictionary aligned</strong><small>No unrelated mock data</small></div></button></section><section class="production-workspace-v92">${tabs()}<section class="glass-card production-main-card-v92">${active()}</section></section>`);document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;render();});}
+    init();
+  </script>
+
+  <script src="../assets/js/fleetos-normalization.js"></script>
+  <script src="../assets/js/ui-normalization-binding.js"></script>
+</body>
+</html>

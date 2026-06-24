@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FleetOS — UI Field Dictionary</title>
+<link href="../assets/css/styles.css" rel="stylesheet"/>
+</head>
+<body>
+<div class="app-shell" id="app"></div>
+<script src="../assets/js/data.js"></script>
+<script src="../assets/js/api-client.js"></script><script src="../assets/js/platform-api.js"></script><script src="../assets/js/auth-guard.js"></script><script src="../assets/js/layout.js"></script>
+<script src="../assets/js/ui-normalization-binding.js"></script>
+<script src="../assets/js/ui-field-dictionary.js"></script>
+<script>
+  renderUIFieldDictionary().then(html => FleetLayout.mount(html)).catch(err => {
+    FleetLayout.mount(`<section class="panel glass-card"><h1>UI Field Dictionary</h1><p class="muted">Failed to load JSON dictionaries: ${err.message}</p></section>`);
+  });
+</script>
+</body>
+</html>
