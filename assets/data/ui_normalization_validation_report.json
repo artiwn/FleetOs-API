@@ -1,0 +1,64 @@
+{
+  "remaining_term_files": {
+    "Station": [
+      "assets/js/client-hierarchy.js",
+      "assets/js/integrations.js",
+      "assets/js/plants.js",
+      "assets/js/tenants.js"
+    ],
+    "station": [
+      "assets/js/alerts.js",
+      "assets/js/client-hierarchy.js",
+      "assets/js/devices.js"
+    ],
+    "Site": [],
+    "site": [
+      "client-onboarding.html",
+      "assets/js/tasks.js",
+      "assets/js/tenants.js"
+    ],
+    "Solar Plant": [],
+    "Solar Plants": [],
+    "KW": [],
+    "KWh": [],
+    "kw": [
+      "pages/audit-center.html",
+      "pages/audit.html",
+      "pages/data-quality.html",
+      "pages/mapping-rules.html",
+      "pages/production-normalization.html",
+      "pages/storage-normalization.html",
+      "assets/js/data-governance.js",
+      "assets/js/production.js",
+      "assets/js/telemetry.js"
+    ],
+    "kwh": [
+      "pages/data-quality.html",
+      "pages/mapping-rules.html",
+      "pages/production-normalization.html",
+      "assets/js/production.js",
+      "assets/js/telemetry.js"
+    ],
+    "$0°C$": [],
+    "°C$": []
+  },
+  "remaining_counts": {
+    "Station": 4,
+    "station": 3,
+    "Site": 0,
+    "site": 3,
+    "Solar Plant": 0,
+    "Solar Plants": 0,
+    "KW": 0,
+    "KWh": 0,
+    "kw": 9,
+    "kwh": 5,
+    "$0°C$": 0,
+    "°C$": 0
+  },
+  "validation": [
+    "external JS node --check passed",
+    "inline script node --check passed"
+  ],
+  "note": "Remaining Station/site hits are internal property names, Weather Station device type, Substation equipment/location term, Website, or source/vendor-specific text."
+}

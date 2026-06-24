@@ -1,0 +1,23 @@
+{
+  "name": "FleetOS UI Normalization Assets",
+  "version": "1.0.0",
+  "purpose": "Reference JSON dictionaries used as source of truth for UI labels, screens and alert mapping.",
+  "files": [
+    "FleetOS_Canonical_Alerts_Mapping_v1_clean.json",
+    "FleetOS_Canonical_Alerts_UI_Ready_v1.json",
+    "FleetOS_UI_Alert_Integration_v1.json",
+    "FleetOS_UI_Field_Dictionary_v1.json",
+    "FleetOS_UI_Screens_v1.json"
+  ],
+  "normalization_scope": [
+    "Plant terminology in user-facing labels/demo values",
+    "kW/kWh/kWp unit casing",
+    "Alert UI dictionary references"
+  ],
+  "not_changed": [
+    "Tenant/client/organization terminology not covered by current JSON",
+    "CSS class names",
+    "HTML ids/data attributes",
+    "JS function names and internal logic"
+  ]
+}

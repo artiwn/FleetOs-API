@@ -1,0 +1,51 @@
+{
+  "version": "1.0.0",
+  "purpose": "Validate that prototype visible field labels are aligned to FleetOS UI JSON labels without displaying dictionary internals.",
+  "source_of_truth": [
+    "FleetOS_UI_Field_Dictionary_v1.json",
+    "FleetOS_UI_Screens_v1.json",
+    "FleetOS_UI_Alert_Integration_v1.json",
+    "FleetOS_Canonical_Alerts_UI_Ready_v1.json"
+  ],
+  "changed_file_count": 26,
+  "changed_files": [
+    "assets/js/alert-dictionary.js",
+    "assets/js/alerts.js",
+    "assets/js/analytics.js",
+    "assets/js/asset-registry.js",
+    "assets/js/asset-topology.js",
+    "assets/js/audit-center.js",
+    "assets/js/client-hierarchy.js",
+    "assets/js/commercial.js",
+    "assets/js/devices.js",
+    "assets/js/integration-operations.js",
+    "assets/js/integrations.js",
+    "assets/js/overview.js",
+    "assets/js/plants.js",
+    "assets/js/production.js",
+    "assets/js/tasks.js",
+    "assets/js/telemetry.js",
+    "assets/js/tenants.js",
+    "pages/alert-crm.html",
+    "pages/alert-normalization.html",
+    "pages/commercial-agreements.html",
+    "pages/data-quality.html",
+    "pages/exception-center.html",
+    "pages/mapping-rules.html",
+    "pages/plants.html",
+    "pages/production-normalization.html",
+    "pages/service-catalog.html"
+  ],
+  "normalization_scope": [
+    "visible HTML/template labels only",
+    "plant terminology: Station/Site/Solar Plant -> Plant where used as a UI term",
+    "alarm labels aligned to FleetOS_UI_Alert_Integration_v1.json",
+    "units normalized: kW/kWh/kWp/MW/MWh/MWp, W/m2, kWh/m2"
+  ],
+  "not_changed": [
+    "Tenant / Client / Organization labels not governed by current JSON dictionaries",
+    "CSS class names, IDs, data attributes, filenames, URLs, function names",
+    "mock data object keys and backend-like property names",
+    "no UI Dictionary or Canonical Fields blocks/pages added"
+  ]
+}

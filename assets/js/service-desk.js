@@ -1,0 +1,9 @@
+function row(t){return `<div class="data-row ticket-row" data-id="${t.id}"><div><strong>${t.title}</strong><small>${t.id} · ${t.channel}</small></div><div>${t.tenant}</div><span class="badge ${V51.tone(t.priority)}">${t.priority}</span><span class="badge ${V51.tone(t.status)}">${t.status}</span><div><strong>${t.assignee}</strong><small>${t.linked}</small></div><div class="row-actions"><button data-open="${t.id}">Open</button></div></div>`}
+FleetLayout.mount(`
+  ${V51.hero('Tenant Lifecycle · Service Desk', 'Service Desk', 'Technical requests, issues, complaints and feedback connected to tenants, plants, alerts and work orders.', 'Tickets synced')}
+  ${V51.kpis([{label:'New Tickets',value:'6',note:'2 from owner portal'}, {label:'In Progress',value:'18',note:'Assigned to support'}, {label:'SLA Breach Risk',value:'2',note:'Escalation suggested'}, {label:'Closed Today',value:'11',note:'Tenant notified'}])}
+  <section class="panel glass-card">
+    <div class="panel-head"><div><h2>Ticket Inbox</h2><p>Tenant-facing bridge between owner portal, support and operations.</p></div><button onclick="FleetLayout.toast('Ticket intake form will open')">+ New Ticket</button></div>
+    <div class="data-table"><div class="data-head ticket-head"><span>Ticket</span><span>Tenant</span><span>Priority</span><span>Status</span><span>Assignee</span><span>Actions</span></div>${V51.tickets.map(row).join('')}</div>
+  </section>`);
+document.querySelector('.main-content').addEventListener('click', e=>{const b=e.target.closest('[data-open]')||e.target.closest('[data-id]'); if(b){V51.drawer('Ticket Detail', V51.tickets.find(x=>x.id===(b.dataset.open||b.dataset.id)), '<div class="drawer-action-grid"><button>Reply Tenant</button><button>Link Incident</button><button>Create Task</button><button>Close Ticket</button></div>')}});

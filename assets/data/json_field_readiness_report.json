@@ -1,0 +1,18 @@
+{
+  "package": "fleetos-global-admin-prototype-json-field-ready",
+  "purpose": "Prototype now displays JSON field dictionary, screen mappings and alert mappings; screen pages get canonical field binding panels.",
+  "ui_field_dictionary_fields": 515,
+  "ui_screens": 19,
+  "screen_field_references": 708,
+  "missing_field_dictionary_bindings": [],
+  "new_files": [
+    "pages/ui-field-dictionary.html",
+    "assets/js/ui-field-dictionary.js",
+    "assets/js/ui-normalization-binding.js"
+  ],
+  "changed_files": [
+    "assets/js/layout.js",
+    "pages/data-governance.html",
+    "all html pages include ui-normalization-binding.js"
+  ]
+}

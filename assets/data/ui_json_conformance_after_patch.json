@@ -1,0 +1,121 @@
+{
+  "status": "patched",
+  "approach": "JSON-driven UI contract panels are mounted on working pages and render every canonical field defined for the mapped screen(s).",
+  "screen_count_expected": 19,
+  "screen_count_mapped": 19,
+  "total_screen_field_references": 708,
+  "mapped_screen_field_references": 708,
+  "unmapped_screen_ids": [],
+  "page_bindings": [
+    {
+      "page": "pages/plants.html",
+      "screen_ids": [
+        "plant_list"
+      ],
+      "field_count": 41
+    },
+    {
+      "page": "pages/plant-detail.html",
+      "screen_ids": [
+        "plant_detail"
+      ],
+      "field_count": 61
+    },
+    {
+      "page": "pages/devices.html",
+      "screen_ids": [
+        "device_list"
+      ],
+      "field_count": 45
+    },
+    {
+      "page": "pages/device-detail.html",
+      "screen_ids": [
+        "inverter_detail",
+        "battery_detail",
+        "logger_dongle_detail",
+        "meter_epm",
+        "module",
+        "weather_station",
+        "ev_charger"
+      ],
+      "field_count": 224
+    },
+    {
+      "page": "pages/alerts.html",
+      "screen_ids": [
+        "alarm_list"
+      ],
+      "field_count": 31
+    },
+    {
+      "page": "pages/alert-detail.html",
+      "screen_ids": [
+        "alarm_detail"
+      ],
+      "field_count": 53
+    },
+    {
+      "page": "pages/telemetry.html",
+      "screen_ids": [
+        "telemetry",
+        "historical_data"
+      ],
+      "field_count": 89
+    },
+    {
+      "page": "pages/production.html",
+      "screen_ids": [
+        "energy_flow"
+      ],
+      "field_count": 28
+    },
+    {
+      "page": "pages/asset-topology.html",
+      "screen_ids": [
+        "topology",
+        "device_architecture"
+      ],
+      "field_count": 71
+    },
+    {
+      "page": "pages/settings.html",
+      "screen_ids": [
+        "device_configuration"
+      ],
+      "field_count": 52
+    },
+    {
+      "page": "pages/client-plant-assignment.html",
+      "screen_ids": [
+        "authorization"
+      ],
+      "field_count": 13
+    },
+    {
+      "page": "pages/client-users-permissions.html",
+      "screen_ids": [
+        "authorization"
+      ],
+      "field_count": 13
+    },
+    {
+      "page": "pages/users.html",
+      "screen_ids": [
+        "authorization"
+      ],
+      "field_count": 13
+    }
+  ],
+  "script_inclusion": {
+    "pages_with_script": 60,
+    "total_pages": 60,
+    "root_index_has_script": true,
+    "root_onboarding_has_script": true
+  },
+  "runtime_mode": "silent_binding",
+  "visual_contract_panels_enabled": false,
+  "user_visible_json_contract_removed": true,
+  "binding_strategy": "Existing UI elements receive non-visual data-field-key/data-ui-key/data-canonical-field attributes when their labels match FleetOS JSON dictionaries.",
+  "developer_debug_object": "window.FleetOSUiContract"
+}

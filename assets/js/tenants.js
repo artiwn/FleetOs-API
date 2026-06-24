@@ -1,0 +1,605 @@
+const tenantSeed = [
+  { id:'TNT-000125', entityType:'Legal Entity', code:'TN-000125', name:'Tenant Alpha Energy', legal:'Tenant Alpha Energy CJSC', trade:'Tenant Alpha', registration:'286.110.123456', tax:'01234567', status:'Active', types:['Owner','Operator'], country:'Armenia', region:'Yerevan', city:'Yerevan', address:'24 Energy Avenue', building:'12', postal:'0010', businessSame:true, plants:318, devices:4820, users:42, revenue:'€248k', health:'Attention Required', integrations:4, alerts:18, industry:'Solar Energy', businessCategory:'Enterprise', parentCompany:'None', employees:'101–500', annualRevenue:'$10M–$50M', webplant:'https://alpha-energy.example', category:'Strategic', tier:'Platinum', priority:'High', risk:'Medium', source:'Partner', account:'Mariam Sargsyan', language:'English', timezone:'Asia/Yerevan', channel:'Email', businessHours:'09:00–18:00', platformNotifications:'Yes', serviceNotifications:'Yes', invoiceNotifications:'Yes', securityNotifications:'Yes', notificationRecipients:'Primary, Billing, Technical', dpa:'Signed', nda:'Signed', compliance:'Pending', confidentiality:'Restricted', controllerType:'Controller', consent:'Active', consentExpiry:'2027-06-30', setup:92, contacts:[{first:'Aram', last:'Hakobyan', full:'Aram Hakobyan', position:'Operations Lead', department:'Operations', role:'Primary', email:'aram@example.am', mobile:'+374 55 100 200', office:'+374 10 200 300', phone:'+374 55 100 200', language:'English', method:'Email', active:'Yes'}], documents:(window.tenantWizardDocuments&&window.tenantWizardDocuments.length?window.tenantWizardDocuments:[{name:'Registration Certificate', type:'Corporate', expiry:'2028-12-31', file:'Registration Certificate.pdf'}]), notes:{general:'', address:'', contacts:'', classification:'', communication:'', legal:''}, created:'2026-05-14', updated:'2026-06-03' },
+  { id:'TNT-000126', entityType:'Legal Entity', code:'TN-000126', name:'Tenant North Operations', legal:'North Region Operations Inc.', trade:'North Ops', registration:'2024-000123456', tax:'12-3456789', status:'Active', types:['Operator'], country:'United States', region:'California', city:'San Diego', address:'510 Grid Street', building:'Suite 420', postal:'92101', businessSame:true, plants:274, devices:3910, users:38, revenue:'$211k', health:'Healthy', integrations:3, alerts:4, industry:'Solar Energy', businessCategory:'Enterprise', parentCompany:'None', employees:'51–100', annualRevenue:'$5M–$10M', webplant:'https://north-ops.example', category:'Standard', tier:'Gold', priority:'Medium', risk:'Low', source:'Direct', account:'Daniel Weber', language:'English', timezone:'America/Los_Angeles', channel:'Portal', businessHours:'08:00–17:00', platformNotifications:'Yes', serviceNotifications:'Yes', invoiceNotifications:'Yes', securityNotifications:'Yes', notificationRecipients:'Primary, Legal', dpa:'Signed', nda:'Signed', compliance:'Approved', confidentiality:'Standard', controllerType:'Processor', consent:'Active', consentExpiry:'2027-04-15', setup:96, contacts:[{first:'Laura', last:'Schmidt', full:'Laura Schmidt', position:'Program Manager', department:'Executive', role:'Primary', email:'laura@example.com', mobile:'+1 (619) 555-0180', office:'+1 (619) 555-0199', phone:'+1 (619) 555-0180', language:'English', method:'Portal', active:'Yes'}], documents:[{name:'NDA', type:'Legal', expiry:'2027-04-15', file:'NDA.pdf'}], created:'2026-05-18', updated:'2026-06-02' },
+  { id:'TNT-000127', entityType:'Legal Entity', code:'TN-000127', name:'Tenant Gamma Grid', legal:'Tenant Gamma Grid LLC', trade:'Tenant Gamma Grid', registration:'2025-000987654', tax:'98-7654321', status:'Suspended', types:['Owner','Investor'], country:'United States', region:'Texas', city:'Austin', address:'88 Storage Lane', building:'Unit 8', postal:'78701', businessSame:false, businessCountry:'United States', businessRegion:'Texas', businessCity:'Houston', businessAddress:'210 Battery Road', businessPostal:'77002', plants:195, devices:2508, users:29, revenue:'$174k', health:'At Risk', integrations:2, alerts:41, industry:'Solar Energy', businessCategory:'SME', parentCompany:'Energy Holdings Group', employees:'11–50', annualRevenue:'$1M–$5M', webplant:'https://gamma-grid.example', category:'Partner', tier:'Silver', priority:'High', risk:'High', source:'Referral', account:'Laura Garcia', language:'English', timezone:'America/Chicago', channel:'Email', businessHours:'08:30–17:30', platformNotifications:'Yes', serviceNotifications:'Yes', invoiceNotifications:'No', securityNotifications:'Yes', notificationRecipients:'Primary, Technical', dpa:'Not Signed', nda:'Signed', compliance:'Pending', confidentiality:'Critical', controllerType:'Controller', consent:'Expired', consentExpiry:'2026-08-01', setup:67, contacts:[{first:'Miguel', last:'Torres', full:'Miguel Torres', position:'Owner Representative', department:'Finance', role:'Billing', email:'miguel@example.com', mobile:'+1 (512) 555-0142', office:'+1 (512) 555-0149', phone:'+1 (512) 555-0142', language:'English', method:'Email', active:'Yes'}], documents:[{name:'Data Processing Agreement', type:'Compliance', expiry:'2026-08-01', file:'Data Processing Agreement.pdf'}], created:'2026-04-27', updated:'2026-06-01' }
+];
+
+const tenantCountryRules = {
+  Armenia: {
+    registrationPlaceholder: 'Example: 286.110.123456',
+    registrationHelp: 'State registration number issued in Armenia.',
+    taxPlaceholder: 'Example: 01234567',
+    taxHelp: 'Armenian Taxpayer Identification Number (TIN).',
+    postalPlaceholder: 'Example: 0010',
+    regionPlaceholder: 'Example: Yerevan, Kotayk, Shirak',
+    phonePlaceholder: '+374 XX XXX XXX',
+    timezone: 'Asia/Yerevan'
+  },
+  'United States': {
+    registrationPlaceholder: 'Example: 2024-000123456',
+    registrationHelp: 'State business registration number.',
+    taxPlaceholder: 'Example: 12-3456789',
+    taxHelp: 'Employer Identification Number (EIN).',
+    postalPlaceholder: 'Example: 10001 or 10001-1234',
+    regionPlaceholder: 'Example: California, Texas, New York',
+    phonePlaceholder: '+1 (XXX) XXX-XXXX',
+    timezone: 'America/New_York'
+  }
+};
+
+function cls(v){ v=String(v).toLowerCase(); if(v.includes('risk')||v.includes('critical')||v.includes('suspend')||v.includes('non')||v.includes('expired')) return 'danger'; if(v.includes('attention')||v.includes('review')||v.includes('medium')||v.includes('inactive')||v.includes('pending')) return 'warning'; return 'success'; }
+function getTenants(){ return JSON.parse(localStorage.getItem('fleetos_demo_tenants') || JSON.stringify(tenantSeed)); }
+function saveTenants(rows){ localStorage.setItem('fleetos_demo_tenants', JSON.stringify(rows)); }
+function genId(){ return 'TNT-' + String(Math.floor(100000 + Math.random()*899999)); }
+function genCode(){ return 'TN-' + String(Math.floor(100000 + Math.random()*899999)); }
+function selectedTenant(){ const id = localStorage.getItem('fleetos_selected_tenant'); return getTenants().find(x=>x.id===id) || getTenants()[0]; }
+function tenantClientRecord(tenant){
+  if (typeof FleetClientModel === 'undefined') return null;
+  return FleetClientModel.clients.find(c => c.name === tenant.name || c.code === tenant.code || c.id === tenant.id) || FleetClientModel.clients[0];
+}
+function tenantAssignedPlants(tenant){
+  const client = tenantClientRecord(tenant);
+  if (typeof FleetClientModel === 'undefined') return [];
+  const base = client ? FleetClientModel.plantsForClient(client.id) : [];
+  const custom = FleetClientModel.plants.filter(p => p.tenantId === tenant.id && (!client || p.clientId !== client.id));
+  return [...base, ...custom];
+}
+function tenantPlantSummaryCards(tenant){
+  if (typeof FleetClientModel === 'undefined') return '<p class="muted">Plant hierarchy model is not loaded.</p>';
+  const client = tenantClientRecord(tenant);
+  const plants = tenantAssignedPlants(tenant);
+  if (!plants.length) return '<div class="empty-state"><strong>No assigned plants yet</strong><small>Create a plant and attach it to an owning client. This tenant will manage the plant workspace.</small></div>';
+  return `<div class="client-flow-v17 tenant-plant-flow-v18"><div><b>Managing Tenant</b><span>${tenant.name}</span></div><em>→</em><div><b>Managed Plants</b><span>${plants.length} plant workspaces</span></div><em>→</em><div><b>Owning Clients & Device</b><span>Client-owned plants · inverters, strings, meters, BESS</span></div></div><div class="plant-card-grid-v17 tenant-assigned-plants-v18">${plants.map(p => {
+    const ds = FleetClientModel.devicesForPlant(p.id);
+    return `<article class="plant-card-v17 clickable-row" data-plant="${p.id}" data-client="${p.clientId || client.id}">
+      <div class="plant-card-top-v17"><div><strong>${p.name}</strong><small>${p.code} · ${p.portfolio}</small></div><span class="badge ${FleetClientModel.badge(p.health)}">${p.health}</span></div>
+      <div class="plant-card-metrics-v17"><div><span>Capacity</span><b>${p.capacityDc}</b></div><div><span>Now</span><b>${p.powerNow}</b></div><div><span>Today</span><b>${p.energyToday}</b></div><div><span>Alerts</span><b>${p.alerts}</b></div></div>
+      <div class="device-strip-v17"><span>Inverters ${p.inverters}</span><span>Meters ${p.meters}</span><span>BESS ${p.battery}</span><span>${ds.length} device records</span></div>
+      <div class="plant-card-footer-v18"><button class="small-btn" type="button" data-open-plant="${p.id}">Open Plant Detail</button><small>${p.country}, ${p.region}, ${p.city}</small></div>
+    </article>`;
+  }).join('')}</div>`;
+}
+
+
+function tenantPlantBuilderCatalogByKind(kind){
+  if (typeof FleetDeviceCatalog === 'undefined') return [];
+  return FleetDeviceCatalog.catalog.filter(x => x.kind === kind);
+}
+function tenantPlantBuilderClientOptions(tenant){
+  if (typeof FleetClientModel === 'undefined') return '';
+  const preferred = tenantClientRecord(tenant);
+  return FleetClientModel.clients.map(c => `<option value="${c.id}" ${preferred && c.id === preferred.id ? 'selected' : ''}>${c.name} · ${c.code}</option>`).join('');
+}
+function tenantBuilderOptions(list, selected){
+  return list.map(v => `<option value="${v}" ${String(selected || '').toLowerCase() === String(v).toLowerCase() ? 'selected' : ''}>${v}</option>`).join('');
+}
+function tenantBuilderCapacityOptions(values, selected){
+  return values.map(v => `<option value="${v}" ${String(selected || '').toLowerCase() === String(v).toLowerCase() ? 'selected' : ''}>${v}</option>`).join('');
+}
+function tenantBuilderCompatibleCatalog(kind){
+  const catalog = tenantPlantBuilderCatalogByKind(kind);
+  if (!tenantPlantBuilderDevicesV28.length) return catalog;
+  const hasInverter = tenantPlantBuilderDevicesV28.some(d => d.kind === 'Inverter');
+  const hasBess = tenantPlantBuilderDevicesV28.some(d => d.kind === 'BESS');
+  const hasSolis = tenantPlantBuilderDevicesV28.some(d => d.vendor === 'Solis');
+  if (kind === 'Inverter') return catalog;
+  if (kind === 'PCS') return hasBess ? catalog : [];
+  if (kind === 'Meter') return hasInverter ? catalog.filter(x => /modbus|rs485/i.test(x.protocol)) : catalog;
+  if (kind === 'Logger') return hasInverter ? catalog.filter(x => x.vendor === 'Meteocontrol' || (hasSolis && x.vendor === 'Solis') || /modbus|sunspec/i.test(x.protocol)) : catalog;
+  if (kind === 'BESS') return hasInverter ? catalog.filter(x => /can|rs485|bms|modbus/i.test(x.protocol)) : catalog;
+  if (['Weather Station','Transformer','Switchgear'].includes(kind)) return catalog;
+  return catalog;
+}
+function tenantPlantBuilderModelOptions(kind){
+  const rows = tenantBuilderCompatibleCatalog(kind);
+  if (!rows.length) return `<option value="">Add the required related device first</option>`;
+  return rows.map(x=>`<option value="${x.kind}|${x.vendor}|${x.model}">${x.vendor} · ${x.model} · ${x.rating}</option>`).join('');
+}
+function tenantPlantBuilderModal(tenant){
+  const kindOptions = ['Inverter','Meter','Logger','BESS','PCS','Weather Station','Transformer','Switchgear'].map(x=>`<option value="${x}">${x}</option>`).join('');
+  const initialModels = tenantPlantBuilderModelOptions('Inverter');
+  return `<div class="tenant-plant-builder-modal-v28" id="tenantPlantBuilderModalV28" aria-hidden="true">
+    <div class="tenant-plant-builder-shell-v28" role="dialog" aria-modal="true" aria-labelledby="tenantPlantBuilderTitleV28">
+      <div class="tenant-builder-head-v28">
+        <div>
+          <p class="eyebrow">Tenant Detail · Managed Plants</p>
+          <h2 id="tenantPlantBuilderTitleV28">Create Plant</h2>
+          <p class="muted">Create a plant under this tenant, attach it to a client, then assemble device from the catalog using dropdowns.</p>
+        </div>
+        <button class="drawer-close" type="button" data-close-tenant-plant-builder>x</button>
+      </div>
+      <div class="tenant-builder-steps-v28">
+        <button class="active" type="button" data-builder-step="1"><b>1</b><span>Plant</span></button>
+        <button type="button" data-builder-step="2"><b>2</b><span>Device</span></button>
+        <button type="button" data-builder-step="3"><b>3</b><span>Review</span></button>
+      </div>
+      <form id="tenantPlantBuilderFormV28" class="tenant-builder-body-v28">
+        <section class="builder-step-panel-v28 active" data-step-panel="1">
+          <div class="section-title-v17 mini"><div><h3>Plant Information</h3><p class="muted">Only plant-level fields are entered here. Device model data comes from the catalog.</p></div></div>
+          <div class="builder-form-grid-v28">
+            <label>Owning Client<select name="clientId">${tenantPlantBuilderClientOptions(tenant)}</select></label>
+            <label>Plant Name<input name="plantName" value="New Plant" required></label>
+            <label>Plant Code<input name="plantCode" value="AUTO-PL-${Math.floor(100+Math.random()*899)}" required></label>
+            <label>Portfolio<input name="portfolio" value="${tenant.name} Portfolio"></label>
+            <label>Plant Type<select name="plantType"><option>Commercial</option><option>Utility Scale</option><option>Industrial</option><option>Hybrid Storage</option></select></label>
+            <label>Country<select name="country">${tenantBuilderOptions(['Armenia','Germany','Spain','Italy','France','United States'], tenant.country || 'Armenia')}</select></label>
+            <label>Region<select name="region">${tenantBuilderOptions(['Yerevan','Kotayk','Armavir','Syunik','Bavaria','Madrid','Catalonia','Lombardy','California'], tenant.region || 'Yerevan')}</select></label>
+            <label>City<select name="city">${tenantBuilderOptions(['Yerevan','Abovyan','Armavir','Kapan','Munich','Madrid','Barcelona','Milan','Los Angeles'], tenant.city || 'Yerevan')}</select></label>
+            <label>Address<input name="address" value="${tenant.address || ''}"></label>
+            <label>Timezone<select name="timezone">${tenantBuilderOptions(['Asia/Yerevan','Europe/Berlin','Europe/Madrid','Europe/Rome','Europe/Paris','America/Los_Angeles'], tenant.timezone || 'Asia/Yerevan')}</select></label>
+            <label>DC Capacity<select name="capacityDc">${tenantBuilderCapacityOptions(['50 kWp','100 kWp','250 kWp','500 kWp','1.00 MWp','2.50 MWp','5.00 MWp','10.00 MWp'], '1.00 MWp')}</select></label>
+            <label>AC Capacity<select name="capacityAc">${tenantBuilderCapacityOptions(['40 kW','90 kW','200 kW','450 kW','0.90 MW','2.00 MW','4.50 MW','9.00 MW'], '0.90 MW')}</select></label>
+          </div>
+        </section>
+        <section class="builder-step-panel-v28" data-step-panel="2">
+          <div class="builder-device-bar-v28">
+            <div>
+              <h3>Device Builder</h3>
+              <p class="muted">Choose a device type and model from the catalog. FleetOS filters the next models by hidden compatibility rules, then you enter only individual instance data.</p>
+            </div>
+            <div class="builder-add-line-v28">
+              <select id="builderDeviceKindV28">${kindOptions}</select>
+              <select id="builderDeviceModelV28">${initialModels}</select>
+              <button class="small-btn primary" type="button" data-add-builder-device>Add Device</button>
+            </div>
+          </div>
+          <div class="builder-compat-hint-v28"><span class="pulse"></span><strong>Compatibility is applied automatically.</strong><small id="builderCompatibilityHintV28">Select an inverter first to filter meters, loggers and BESS models by protocol.</small></div>
+          <div class="builder-device-table-wrap-v28">
+            <div class="data-table compact-table tenant-builder-device-table-v28">
+              <div class="data-head"><span>Device</span><span>Catalog Model</span><span>Individual Data</span><span>Link / Role</span><span>Action</span></div>
+              <div id="builderDeviceRowsV28"></div>
+            </div>
+          </div>
+        </section>
+        <section class="builder-step-panel-v28" data-step-panel="3">
+          <div class="section-title-v17 mini"><div><h3>Review & Create</h3><p class="muted">Review plant, client assignment, device count and topology before creating the plant.</p></div></div>
+          <div id="builderReviewV28" class="builder-review-v28"></div>
+        </section>
+      </form>
+      <div class="tenant-builder-footer-v28">
+        <button class="secondary-btn" type="button" data-close-tenant-plant-builder>Cancel</button>
+        <div>
+          <button class="small-btn ghost" type="button" data-builder-prev>Previous</button>
+          <button class="small-btn primary" type="button" data-builder-next>Next</button>
+          <button class="primary-btn hidden" type="button" data-create-tenant-plant>Create Plant</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+let tenantPlantBuilderDevicesV28 = [];
+let tenantPlantBuilderStepV28 = 1;
+function builderSelectedCatalogItem(){
+  const value = document.getElementById('builderDeviceModelV28')?.value || '';
+  const [kind,vendor,model] = value.split('|');
+  return (FleetDeviceCatalog?.catalog || []).find(x => x.kind === kind && x.vendor === vendor && x.model === model) || null;
+}
+
+function refreshTenantBuilderModelOptions(){
+  const kind = document.getElementById('builderDeviceKindV28')?.value;
+  const model = document.getElementById('builderDeviceModelV28');
+  if (kind && model) model.innerHTML = tenantPlantBuilderModelOptions(kind);
+  renderTenantBuilderCompatibilityHint();
+}
+
+function renderTenantBuilderDeviceRows(){
+  const host = document.getElementById('builderDeviceRowsV28');
+  if (!host) return;
+  if (!tenantPlantBuilderDevicesV28.length) {
+    host.innerHTML = `<div class="data-row empty-builder-row-v28"><div><strong>No device selected</strong><small>Add devices using the dropdowns above.</small></div><div></div><div></div><div></div><div></div></div>`;
+  } else {
+    host.innerHTML = tenantPlantBuilderDevicesV28.map((d,i)=>`<div class="data-row" data-builder-device-row="${i}">
+      <div><strong>${d.kind}</strong><small>${d.vendor} · ${d.model}</small></div>
+      <div><strong>${d.rating}</strong><small>${d.protocol}</small></div>
+      <div class="instance-fields-v28"><input placeholder="Serial number" value="${d.serial || ''}" data-builder-field="serial"><input placeholder="Firmware / address" value="${d.firmware || ''}" data-builder-field="firmware"><input placeholder="Location" value="${d.location || ''}" data-builder-field="location"></div>
+      <div><select data-builder-field="role"><option ${d.role==='Plant-level device'?'selected':''}>Plant-level device</option><option ${d.role==='Linked to inverter'?'selected':''}>Linked to inverter</option><option ${d.role==='Linked to BESS'?'selected':''}>Linked to BESS</option><option ${d.role==='Grid / POI'?'selected':''}>Grid / POI</option><option ${d.role==='Weather context'?'selected':''}>Weather context</option></select></div>
+      <div><button class="small-btn ghost" type="button" data-remove-builder-device="${i}">Remove</button></div>
+    </div>`).join('');
+  }
+  refreshTenantBuilderModelOptions();
+  renderTenantBuilderReview();
+}
+function renderTenantBuilderCompatibilityHint(){
+  const hint = document.getElementById('builderCompatibilityHintV28');
+  const kind = document.getElementById('builderDeviceKindV28')?.value || 'Inverter';
+  const model = document.getElementById('builderDeviceModelV28');
+  if (!hint) return;
+  const counts = tenantPlantBuilderDevicesV28.reduce((acc,d)=>{ acc[d.kind]=(acc[d.kind]||0)+1; return acc; },{});
+  const total = tenantBuilderCompatibleCatalog(kind).length;
+  if (!tenantPlantBuilderDevicesV28.length) {
+    hint.textContent = 'Select an inverter first to filter meters, loggers and BESS models by protocol.';
+  } else if (kind === 'PCS' && !counts.BESS) {
+    hint.textContent = 'PCS models are hidden until a BESS is selected, because PCS must match the storage system.';
+  } else {
+    hint.textContent = `${total} compatible ${kind} model${total === 1 ? '' : 's'} available based on selected device.`;
+  }
+  if (model && !model.value && total) model.innerHTML = tenantPlantBuilderModelOptions(kind);
+}
+function renderTenantBuilderReview(){
+  const host = document.getElementById('builderReviewV28');
+  const form = document.getElementById('tenantPlantBuilderFormV28');
+  if (!host || !form) return;
+  const fd = new FormData(form);
+  const client = FleetClientModel?.getClient(fd.get('clientId'));
+  const counts = tenantPlantBuilderDevicesV28.reduce((acc,d)=>{ acc[d.kind]=(acc[d.kind]||0)+1; return acc; },{});
+  host.innerHTML = `<div class="builder-review-grid-v28">
+    <article><span>Plant</span><strong>${fd.get('plantName') || 'New Plant'}</strong><small>${fd.get('plantCode') || 'AUTO'} · ${fd.get('country') || '—'}, ${fd.get('city') || '—'}</small></article>
+    <article><span>Owning Client</span><strong>${client?.name || '—'}</strong><small>Plant will appear here as a managed plant and under the selected client as an owned plant</small></article>
+    <article><span>Device</span><strong>${tenantPlantBuilderDevicesV28.length} devices</strong><small>${Object.entries(counts).map(([k,v])=>`${k}: ${v}`).join(' · ') || 'No device yet'}</small></article>
+    <article><span>Topology</span><strong>Plant-level structure</strong><small>Inverters / meters / loggers / BESS / grid infrastructure</small></article>
+  </div>`;
+}
+function setTenantBuilderStep(step){
+  tenantPlantBuilderStepV28 = Math.max(1, Math.min(3, step));
+  document.querySelectorAll('[data-builder-step]').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.builderStep) === tenantPlantBuilderStepV28));
+  document.querySelectorAll('[data-step-panel]').forEach(panel => panel.classList.toggle('active', Number(panel.dataset.stepPanel) === tenantPlantBuilderStepV28));
+  document.querySelector('[data-builder-prev]')?.classList.toggle('hidden', tenantPlantBuilderStepV28 === 1);
+  document.querySelector('[data-builder-next]')?.classList.toggle('hidden', tenantPlantBuilderStepV28 === 3);
+  document.querySelector('[data-create-tenant-plant]')?.classList.toggle('hidden', tenantPlantBuilderStepV28 !== 3);
+  renderTenantBuilderReview();
+}
+function openTenantPlantBuilder(){
+  tenantPlantBuilderDevicesV28 = [];
+  tenantPlantBuilderStepV28 = 1;
+  const modal = document.getElementById('tenantPlantBuilderModalV28');
+  modal?.classList.add('open');
+  setTenantBuilderStep(1);
+  renderTenantBuilderDeviceRows();
+  renderTenantBuilderCompatibilityHint();
+}
+function closeTenantPlantBuilder(){ document.getElementById('tenantPlantBuilderModalV28')?.classList.remove('open'); }
+function createTenantPlantFromBuilder(){
+  if (typeof FleetClientModel === 'undefined') return;
+  const form = document.getElementById('tenantPlantBuilderFormV28');
+  const fd = new FormData(form);
+  const client = FleetClientModel.getClient(fd.get('clientId'));
+  const plantId = 'PL-CUSTOM-' + Date.now().toString().slice(-6);
+  const plant = {
+    id: plantId,
+    code: fd.get('plantCode') || plantId,
+    externalId: 'MANUAL-' + plantId,
+    name: fd.get('plantName') || 'New Plant',
+    clientId: client.id,
+    portfolio: fd.get('portfolio') || `${client.name} Portfolio`,
+    status: 'Draft', type: fd.get('plantType') || 'Commercial', country: fd.get('country') || client.country, region: fd.get('region') || '', city: fd.get('city') || client.city,
+    address: fd.get('address') || '', timezone: fd.get('timezone') || 'Asia/Yerevan', capacityDc: fd.get('capacityDc') || '1.00 MWp', capacityAc: fd.get('capacityAc') || '0.90 MW', gridCapacity: fd.get('capacityAc') || '0.90 MW',
+    commissioning: 'Not commissioned', tenantId: selectedTenant().id, owner: client.name, operator: 'Tenant workspace', om: 'Not assigned', powerNow: '—', energyToday: '—', alerts: 0, health: 'Draft', panels: 0,
+    inverters: tenantPlantBuilderDevicesV28.filter(d=>d.kind==='Inverter').length,
+    strings: 0,
+    transformers: tenantPlantBuilderDevicesV28.filter(d=>d.kind==='Transformer').length,
+    meters: tenantPlantBuilderDevicesV28.filter(d=>d.kind==='Meter').length,
+    battery: tenantPlantBuilderDevicesV28.some(d=>d.kind==='BESS') ? 'Yes' : 'No',
+    devices: []
+  };
+  const devices = tenantPlantBuilderDevicesV28.map((d,i)=>({
+    id: `${d.kind.split(' ')[0].toUpperCase().slice(0,4)}-${plantId}-${i+1}`,
+    plantId,
+    type: d.kind === 'Transformer' ? 'Grid Device' : d.kind,
+    name: `${d.kind} ${String(i+1).padStart(2,'0')}`,
+    vendor: d.vendor,
+    model: d.model,
+    serial: d.serial || 'Pending serial',
+    capacity: d.rating,
+    firmware: d.firmware || 'Pending',
+    status: 'Draft',
+    location: d.location || d.role || 'Plant level',
+    lastSeen: 'Not connected',
+    children: d.individual || 'Instance data required'
+  }));
+  plant.devices = devices.map(d=>d.id);
+  const customPlants = JSON.parse(localStorage.getItem('fleetos_custom_plants') || '[]').filter(x => x.id !== plant.id);
+  const customDevices = JSON.parse(localStorage.getItem('fleetos_custom_devices') || '[]').filter(x => x.plantId !== plant.id);
+  customPlants.push(plant);
+  customDevices.push(...devices);
+  localStorage.setItem('fleetos_custom_plants', JSON.stringify(customPlants));
+  localStorage.setItem('fleetos_custom_devices', JSON.stringify(customDevices));
+  if (!FleetClientModel.plants.some(x=>x.id===plant.id)) FleetClientModel.plants.push(plant);
+  devices.forEach(d=>{ if (!FleetClientModel.devices.some(x=>x.id===d.id)) FleetClientModel.devices.push(d); });
+  closeTenantPlantBuilder();
+  FleetLayout.toast('Plant created and attached to client');
+  setTenantDetailEditMode(false);
+}
+
+
+let tenantDetailEditMode = false;
+function tenantComplianceValue(c){ return c.compliance || c.status || c.health || 'Active'; }
+function tenantStatusValue(c){ return c.status || 'Active'; }
+function tenantDisplayValue(v){ return (v === undefined || v === null || v === '') ? '—' : v; }
+function tenantActiveDetailTab(){ return document.querySelector('[data-tenant-tab].active')?.dataset.tenantTab || 'general'; }
+function tenantEditableControl(key, value, label){
+  const safe = (value === undefined || value === null) ? '' : String(value).replaceAll('"','&quot;');
+  if (['Tenant Status','Compliance Status','NDA Status','Data Processing Agreement','Consent Status','Business Address Same as Legal','Receive Platform Notifications','Receive Service Notifications','Receive Invoice Notifications','Receive Security Notifications'].includes(label)) {
+    const options = label === 'Tenant Status' ? ['Active','Inactive','Suspended','Archived'] : label === 'Compliance Status' ? ['Approved','Pending','Rejected','Review Required'] : label === 'Consent Status' ? ['Active','Expired','Revoked'] : ['Yes','No','Signed','Not Signed','Pending'];
+    return `<select data-tenant-edit-key="${key}">${options.map(o=>`<option ${safe===o?'selected':''}>${o}</option>`).join('')}</select>`;
+  }
+  if (String(safe).length > 80 || ['Notification Recipients','Street Address','Business Address','Website','Notes for General Information','Notes for Address Information','Notes for Contact Person','Notes for Tenant Classification','Notes for Communication Preferences','Notes for Legal & Compliance'].includes(label)) return `<textarea data-tenant-edit-key="${key}">${safe}</textarea>`;
+  return `<input data-tenant-edit-key="${key}" value="${safe}">`;
+}
+function tenantInfo(items, editable = tenantDetailEditMode){ return `<div class="info-grid ${editable ? 'editing-grid' : ''}">${items.map(([a,b,k])=>`<div><span>${a}</span>${editable && k ? tenantEditableControl(k,b,a) : `<strong>${tenantDisplayValue(b)}</strong>`}</div>`).join('')}</div>`; }
+function tenantNotesValue(c, section){ return (c.notes && c.notes[section]) || c[section + 'Notes'] || ''; }
+function tenantNotesBlock(c, section, label, editable = tenantDetailEditMode){ const key = `notes::${section}`; const value = tenantNotesValue(c, section); return `<div class="tenant-notes-block"><span>${label}</span>${editable ? `<textarea data-tenant-edit-key="${key}" placeholder="${label}...">${String(value||'').replaceAll('<','&lt;')}</textarea>` : `<strong>${tenantDisplayValue(value)}</strong>`}</div>`; }
+function updateSelectedTenant(mutator){
+  const rows = getTenants();
+  const id = selectedTenant().id;
+  const idx = rows.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  mutator(rows[idx]);
+  saveTenants(rows);
+}
+function setTenantDetailEditMode(enabled){
+  tenantDetailEditMode = enabled;
+  const tab = tenantActiveDetailTab();
+  const content = document.getElementById('detailContent');
+  if (content) content.innerHTML = detailTab(selectedTenant(), tab, enabled);
+  const title = document.getElementById('tenantDetailTitle');
+  if (title) title.textContent = tenantTabLabel(tab);
+  document.getElementById('editTenantTab')?.classList.toggle('hidden', enabled);
+  document.getElementById('cancelTenantEdit')?.classList.toggle('hidden', !enabled);
+  document.getElementById('saveTenantEdit')?.classList.toggle('hidden', !enabled);
+}
+function saveTenantDetailEdits(){
+  const inputs = Array.from(document.querySelectorAll('#detailContent [data-tenant-edit-key]'));
+  updateSelectedTenant(c => {
+    inputs.forEach(input => {
+      const key = input.dataset.tenantEditKey;
+      const value = input.value;
+      if (key.startsWith('notes::')) {
+        const [, section] = key.split('::');
+        c.notes = c.notes || {};
+        c.notes[section] = value;
+      } else if (key.startsWith('contacts::')) {
+        const [, index, field] = key.split('::');
+        c.contacts = c.contacts || [];
+        c.contacts[+index] = c.contacts[+index] || {};
+        c.contacts[+index][field] = value;
+        if (['first','last'].includes(field)) c.contacts[+index].full = `${c.contacts[+index].first || ''} ${c.contacts[+index].last || ''}`.trim();
+      } else if (key.startsWith('documents::')) {
+        const [, index, field] = key.split('::');
+        c.documents = c.documents || [];
+        c.documents[+index] = c.documents[+index] || {};
+        c.documents[+index][field] = value;
+      } else if (key === 'types') {
+        c.types = value.split(',').map(x => x.trim()).filter(Boolean);
+      } else if (key === 'businessSame') {
+        c.businessSame = ['yes','true','signed'].includes(value.toLowerCase());
+      } else {
+        c[key] = value;
+      }
+    });
+    c.updated = new Date().toISOString().slice(0,10);
+  });
+  setTenantDetailEditMode(false);
+  FleetLayout.toast('Tenant section saved');
+}
+
+function tenantRows(rows){ return `<div class="data-table tenant-table"><div class="data-head"><span>Tenant</span><span>Legal / Country</span><span>Registry</span><span>Classification</span><span>Compliance</span><span>Actions</span></div>${rows.map(c=>{ const compliance = tenantComplianceValue(c); const status = tenantStatusValue(c); return `<div class="data-row" data-id="${c.id}"><div><strong>${c.name}</strong><small>${c.code}<br>${c.legal}</small></div><div><strong>${c.country}, ${c.city}</strong><small>${(c.types||[]).join(', ')}<br>${c.address}</small></div><div><strong>${c.registration || 'Registered'}</strong><small>Tax ID / VAT: ${c.tax}</small></div><div><strong>${c.tier}</strong><small>${c.category} · Risk: ${c.risk}</small></div><div class="tenant-status-stack"><span class="badge ${cls(compliance)}">${compliance}</span><small>${status} · Setup ${c.setup || 0}%</small></div><div class="row-actions"><button data-action="view">Open</button><button data-action="integrate">Connect</button><button data-action="edit">Edit</button></div></div>`; }).join('')}</div>`; }
+function renderTenantRegistry(){ const rows=getTenants(); return `<section class="page-hero"><div><p class="eyebrow">Global Admin · Tenant Lifecycle</p><h1>Tenant Registry</h1><p class="muted">Create and maintain tenant legal identity, addresses, contacts, classification, communication preferences and compliance.</p></div><button class="create-action" id="openTenantWizard" type="button"><span class="pulse"></span><div><strong>+ Create Tenant</strong><small>6-step documented form</small></div></button></section><section class="context-bar glass-card"><button class="ctx-item"><span>Total Tenants</span><strong>${rows.length}</strong></button><button class="ctx-item"><span>Active</span><strong>${rows.filter(x=>x.status==='Active').length}</strong></button><button class="ctx-item"><span>Armenia / USA</span><strong>${rows.filter(x=>['Armenia','United States'].includes(x.country)).length}</strong></button><button class="ctx-item"><span>Needs Compliance Review</span><strong>${rows.filter(x=>x.compliance!=='Approved').length}</strong></button></section><section class="panel glass-card"><div class="panel-head"><div><h2>Tenants</h2><p>Only tenant data fields from the Client Data document are used. Portal Access and Internal Notes & Audit are intentionally excluded.</p></div><div class="toolbar"><input id="tenantSearch" placeholder="Search tenant, country, tax id..."/><select id="tenantStatus"><option>All Statuses</option><option>Active</option><option>Inactive</option><option>Suspended</option><option>Archived</option></select></div></div><div id="tenantTable">${tenantRows(rows)}</div></section>${tenantWizard()}`; }
+
+function stepIntro(name, text){ return `<div class="wizard-description full"><strong>${name}</strong><p>${text}</p><textarea name="${name.toLowerCase().replace(/[^a-z0-9]+/g,'_')}_notes" placeholder="Notes for ${name}..."></textarea></div>`; }
+function yesNo(name, label, yes='Yes'){ return `<label>${label}<select name="${name}"><option>${yes}</option><option>${yes==='Yes'?'No':'Yes'}</option></select></label>`; }
+function tenantWizard(){ const steps=['General Information','Address Information','Contact Persons','Tenant Classification','Communication Preferences','Legal & Compliance']; return `<aside class="modal" id="tenantModal"><div class="modal-card wide-modal"><button class="modal-close" id="closeTenantModal">x</button><p class="eyebrow">Tenant Provisioning Wizard</p><h2>Create Tenant</h2><div class="setup-layout"><div class="setup-rail">${steps.map((s,i)=>`<button class="${i===0?'active':''}" data-step="${i}"><b>${i+1}</b><span>${s}</span></button>`).join('')}</div><form id="tenantForm" class="form-grid setup-form">
+<div class="wizard-step active">
+  <label>Tenant ID <input disabled value="Auto-generated after save"></label>
+  <label>Tenant Code <input disabled value="Auto-generated unique code"></label>
+  <label class="full entity-type-field">Entity Type <select name="entityType" id="tenantEntityType"><option>Legal Entity</option><option>Individual</option></select><small class="field-help">Switching entity type changes labels, placeholders and visible organization-only fields. It does not add extra fields.</small></label>
+  <label><span id="tenantNameLabel">Tenant Name *</span><input name="name" required placeholder="ABC Solar Energy"></label>
+  <label><span id="legalNameLabel">Legal Name *</span><input name="legal" required placeholder="ABC Solar Energy LLC"></label>
+  <label><span id="tradeNameLabel">Trade Name</span><input name="trade" placeholder="Public / commercial name"></label>
+  <label>Display Name <input name="displayName" placeholder="Name shown across FleetOS UI"></label>
+  <label>Country * <select name="country" id="tenantCountry"><option>Armenia</option><option>United States</option></select></label>
+  <label><span id="registrationLabel">Registration Number</span><input name="registration" id="registrationNumber" placeholder="Example: 286.110.123456"><small class="field-help" id="registrationHelp">State registration number issued in Armenia.</small></label>
+  <label><span id="taxLabel">Tax ID / VAT Number *</span><input name="tax" id="taxNumber" required placeholder="Example: 01234567"><small class="field-help" id="taxHelp">Armenian Taxpayer Identification Number (TIN).</small></label>
+  <label>Tenant Status * <select name="status"><option>Inactive</option><option>Active</option><option>Suspended</option><option>Archived</option></select></label>
+  <label>Tenant Type * <select name="type"><option>Owner</option><option>Operator</option><option>Investor</option><option>EPC</option><option>O&M</option><option>Utility</option></select></label>
+  <label>Account Manager <input name="account" placeholder="John Smith"></label>
+  <label class="org-only">Industry Sector <select name="industry"><option>Solar Energy</option><option>Renewable Energy</option><option>Energy Services</option><option>O&M Services</option><option>Commercial Real Estate</option><option>Industrial</option><option>Government / Municipality</option><option>Utility</option></select></label>
+  <label class="org-only">Business Category <select name="businessCategory"><option>Enterprise</option><option>SME</option><option>Government</option></select></label>
+  <label class="org-only">Parent Company <select name="parentCompany"><option>None</option><option>Parent Company A</option><option>Parent Company B</option></select></label>
+  <label class="org-only">Number of Employees <input type="number" name="employees" placeholder="120"></label>
+  <label class="org-only">Annual Revenue Range <select name="annualRevenue"><option>Less than $1M</option><option>$1M–$5M</option><option>$5M–$10M</option><option>$10M–$50M</option><option>$50M+</option></select></label>
+  <label class="full org-only">Website <input type="url" name="webplant" placeholder="https://company.example"></label>
+  <div class="country-rules full" id="countryRules"><strong>Country rules: Armenia</strong><p>Registration Number: 286.110.123456 · Tax ID / VAT Number: 01234567 · Phone: +374 XX XXX XXX</p></div>
+  ${stepIntro('General Information','Legal identity and organization information for the tenant. Country changes only format hints, validation guidance and placeholders; field names stay the same.')}
+</div>
+<div class="wizard-step">
+  <h3 class="full">Legal Address</h3>
+  <label>Country <select name="legalCountry" id="legalCountry"><option>Armenia</option><option>United States</option></select></label>
+  <label>State / Region <input name="region" id="legalRegion" placeholder="Example: Yerevan, Kotayk, Shirak"></label>
+  <label>City * <input name="city" required placeholder="Yerevan"></label>
+  <label>Street Address * <input name="address" required maxlength="500" placeholder="24 Energy Avenue"></label>
+  <label>Building Number <input name="building" placeholder="12"></label>
+  <label>Postal Code <input name="postal" id="legalPostal" placeholder="Example: 0010"></label>
+  <label class="check full"><input type="checkbox" name="businessSame" id="businessSame" checked> Business Address same as Legal Address</label>
+  <div class="full business-address-fields" id="businessAddressFields">
+    <h3>Business Address</h3>
+    <div class="form-grid nested-grid">
+      <label>Country <select name="businessCountry" id="businessCountry"><option>Armenia</option><option>United States</option></select></label>
+      <label>Region <input name="businessRegion" id="businessRegion" placeholder="Example: Yerevan, Kotayk, Shirak"></label>
+      <label>City <input name="businessCity" placeholder="City"></label>
+      <label>Street Address <input name="businessAddress" placeholder="Street Address"></label>
+      <label>Postal Code <input name="businessPostal" id="businessPostal" placeholder="Example: 0010"></label>
+    </div>
+  </div>
+  ${stepIntro('Address Information','Legal address is required. Business address can reuse legal address or be entered separately when the checkbox is unchecked.')}
+</div>
+<div class="wizard-step">
+  <div class="full contact-step-head"><div><h3>Contact Persons</h3><p class="muted">Add one or more contact persons for Primary, Billing, Legal, Technical or Commercial communication.</p></div><button type="button" class="primary-action" id="openInlineContact">+ Add Contact</button></div>
+  <section class="tenant-inline-form full is-hidden" id="inlineContactForm">
+    <div class="inline-form-head"><strong>Contact Detail</strong><small>Fill the contact fields and save them into this tenant record.</small></div>
+    <div class="form-grid nested-grid tenant-contact-form">
+      <label>First Name * <input id="contactFirst" placeholder="First name"></label>
+      <label>Last Name * <input id="contactLast" placeholder="Last name"></label>
+      <label>Position <input id="contactPosition" placeholder="Operations Lead"></label>
+      <label>Department <select id="contactDepartment"><option>Executive</option><option>Finance</option><option>Legal</option><option>Technical</option><option>Operations</option></select></label>
+      <label>Contact Role <select id="contactRole"><option>Primary</option><option>Billing</option><option>Legal</option><option>Technical</option><option>Commercial</option></select></label>
+      <label>Email * <input id="contactEmail" type="email" placeholder="contact@company.example"></label>
+      <label>Mobile Phone <input id="contactPhone" type="tel" placeholder="+374 XX XXX XXX"></label>
+      <label>Office Phone <input id="contactOfficePhone" type="tel" placeholder="+374 XX XXX XXX"></label>
+      <label>Preferred Language <select id="contactLanguage"><option>English</option><option>Armenian</option></select></label>
+      <label>Preferred Contact Method <select id="contactMethod"><option>Email</option><option>Phone</option><option>Portal</option></select></label>
+      <label class="check"><input type="checkbox" id="contactActive" checked> Active</label>
+      <div class="inline-form-actions"><button type="button" class="primary-action" id="saveInlineContact">Save Contact</button><button type="button" class="secondary-action" id="cancelInlineContact">Cancel</button></div>
+    </div>
+  </section>
+  <div class="data-table full compact-table tenant-contact-table wizard-contact-table" id="wizardContactsTable"><div class="data-head"><span>Full Name</span><span>Role</span><span>Email</span><span>Phone</span><span>Actions</span></div><div class="empty-state">No contacts added yet. Add at least one Primary contact.</div></div>
+  ${stepIntro('Contact Persons','Contact records are people related to this tenant. They do not create platform users automatically.')}
+</div>
+<div class="wizard-step">
+  <label>Tenant Category <select name="category"><option>Strategic</option><option>Standard</option><option>Partner</option></select></label>
+  <label>Account Tier <select name="tier"><option>Bronze</option><option>Silver</option><option>Gold</option><option>Platinum</option></select></label>
+  <label>Tenant Priority <select name="priority"><option>Low</option><option>Medium</option><option>High</option></select></label>
+  <label>Risk Category <select name="risk"><option>Low</option><option>Medium</option><option>High</option></select></label>
+  <label class="full">Acquisition Source <select name="source"><option>Referral</option><option>Direct</option><option>Partner</option><option>Event</option></select></label>
+  ${stepIntro('Tenant Classification','Business classification fields help Global Admin segment tenants without mixing in plants, devices, billing or integrations.')}
+</div>
+<div class="wizard-step">
+  <label>Preferred Language <select name="language"><option>English</option><option>Armenian</option></select></label>
+  <label>Preferred Time Zone <select name="timezone" id="preferredTimezone"><option>Asia/Yerevan</option><option>America/New_York</option><option>America/Los_Angeles</option><option>America/Chicago</option></select></label>
+  <label>Preferred Communication Channel <select name="channel"><option>Email</option><option>Phone</option><option>Portal</option></select></label>
+  <label>Business Hours <input name="businessHours" placeholder="09:00–18:00"></label>
+  ${yesNo('platformNotifications','Receive Platform Notifications')}
+  ${yesNo('serviceNotifications','Receive Service Notifications')}
+  ${yesNo('invoiceNotifications','Receive Invoice Notifications')}
+  ${yesNo('securityNotifications','Receive Security Notifications')}
+  <label class="full">Notification Recipients <input name="notificationRecipients" placeholder="Primary, Billing, Technical"></label>
+  ${stepIntro('Communication Preferences','Communication and notification preferences for the tenant organization. Portal access is intentionally not configured here.')}
+</div>
+<div class="wizard-step">
+  <label>Data Processing Agreement <select name="dpa"><option>Signed</option><option>Not Signed</option></select></label>
+  <label>NDA Status <select name="nda"><option>Signed</option><option>Not Signed</option></select></label>
+  <label>Compliance Status <select name="compliance"><option>Approved</option><option>Pending</option></select></label>
+  <label>Confidentiality Level <select name="confidentiality"><option>Standard</option><option>Restricted</option><option>Critical</option></select></label>
+  <label>Data Controller Type <select name="controllerType"><option>Controller</option><option>Processor</option></select></label>
+  <label>Consent Status <select name="consent"><option>Active</option><option>Expired</option></select></label>
+  <label>Consent Expiry Date <input type="date" name="consentExpiry"></label>
+  <input type="file" id="tenantDocUpload" accept=".pdf,.doc,.docx" multiple hidden>
+  <div class="document-table-toolbar full"><button type="button" class="table-add-btn document-add-btn" id="tenantDocUploadAction" data-trigger-tenant-doc-upload title="Add documents">+ Add Documents</button></div>
+  <div class="data-table full compact-table tenant-document-table wizard-document-table" id="wizardDocumentsTable"><div class="data-head"><span>Document Name</span><span>Type</span><span>Expiry</span><span>File</span><span>Actions</span></div></div>
+  ${stepIntro('Legal & Compliance','Compliance and document information for the tenant. Audit data is kept in Audit Center, not in this form.')}
+</div>
+<div class="form-footer full"><button type="button" id="prevTenantStep">Back</button><button type="button" class="primary-action" id="nextTenantStep">Next</button><button type="submit" class="primary-action" id="saveTenant">Create Tenant</button></div></form></div></div></aside>`; }
+
+function wireTenantRegistry(){ let step=0; const modal=document.getElementById('tenantModal'); const steps=[...document.querySelectorAll('.wizard-step')]; const rails=[...document.querySelectorAll('.setup-rail button')]; const show=i=>{ step=Math.max(0,Math.min(steps.length-1,i)); steps.forEach((s,n)=>s.classList.toggle('active',n===step)); rails.forEach((r,n)=>r.classList.toggle('active',n===step)); }; const applyAddressRules=(country, prefix)=>{ const rule=tenantCountryRules[country] || tenantCountryRules.Armenia; const region=document.getElementById(prefix+'Region'), postal=document.getElementById(prefix+'Postal'); if(region) region.placeholder=rule.regionPlaceholder; if(postal) postal.placeholder=rule.postalPlaceholder; }; const updateCountryRules=()=>{ const country=document.getElementById('tenantCountry')?.value || 'Armenia'; const entity=document.getElementById('tenantEntityType')?.value || 'Legal Entity'; const rule=tenantCountryRules[country]; if(!rule) return; const isIndividual=entity==='Individual'; const reg=document.getElementById('registrationNumber'), tax=document.getElementById('taxNumber'), tz=document.getElementById('preferredTimezone'), mobile=document.getElementById('contactPhone'), office=document.getElementById('contactOfficePhone'); const labels={ tenantName:document.getElementById('tenantNameLabel'), legal:document.getElementById('legalNameLabel'), trade:document.getElementById('tradeNameLabel'), reg:document.getElementById('registrationLabel'), tax:document.getElementById('taxLabel') }; if(labels.tenantName) labels.tenantName.textContent=isIndividual?'Tenant Display Name *':'Tenant Name *'; if(labels.legal) labels.legal.textContent=isIndividual?'Full Legal Name *':'Legal Name *'; if(labels.trade) labels.trade.textContent=isIndividual?'Display Name':'Trade Name'; if(labels.reg) labels.reg.textContent=isIndividual?'Personal ID / Passport Number':'Registration Number'; if(labels.tax) labels.tax.textContent=isIndividual?'Tax ID / SSN / ITIN *':'Tax ID / VAT Number *'; const individual={ Armenia:{reg:'Example: AM1234567', regHelp:'Personal ID or passport number for an individual in Armenia.', tax:'Example: 01234567', taxHelp:'Individual taxpayer identifier when applicable in Armenia.'}, 'United States':{reg:'Example: P123456789', regHelp:'Passport, state ID or other personal identification reference.', tax:'Example: 123-45-6789', taxHelp:'SSN or ITIN for an individual in the United States.'} }; const active=isIndividual?individual[country]:null; if(reg) reg.placeholder=active?active.reg:rule.registrationPlaceholder; if(tax) tax.placeholder=active?active.tax:rule.taxPlaceholder; if(tz && [...tz.options].some(o=>o.value===rule.timezone)) tz.value=rule.timezone; if(mobile) mobile.placeholder=rule.phonePlaceholder; if(office) office.placeholder=rule.phonePlaceholder; document.querySelectorAll('.org-only').forEach(el=>el.classList.toggle('is-hidden', isIndividual)); const legalCountry=document.getElementById('legalCountry'); if(legalCountry) legalCountry.value=country; applyAddressRules(legalCountry?.value || country, 'legal'); applyAddressRules(document.getElementById('businessCountry')?.value || country, 'business'); const rh=document.getElementById('registrationHelp'), th=document.getElementById('taxHelp'), cr=document.getElementById('countryRules'); if(rh) rh.textContent=active?active.regHelp:rule.registrationHelp; if(th) th.textContent=active?active.taxHelp:rule.taxHelp; if(cr) cr.innerHTML=`<strong>Country rules: ${country} · ${entity}</strong><p>${isIndividual?'Personal ID / Passport Number':'Registration Number'}: ${(active?active.reg:rule.registrationPlaceholder).replace('Example: ','')} · ${isIndividual?'Tax ID / SSN / ITIN':'Tax ID / VAT Number'}: ${(active?active.tax:rule.taxPlaceholder).replace('Example: ','')} · Phone: ${rule.phonePlaceholder}</p>`; }; const toggleBusiness=()=>{ const box=document.getElementById('businessAddressFields'), chk=document.getElementById('businessSame'); if(box&&chk) box.classList.toggle('is-hidden', chk.checked); }; window.tenantWizardContacts = window.tenantWizardContacts || [];
+ window.tenantWizardDocuments = window.tenantWizardDocuments || [];
+ window.tenantWizardEditContactIndex = null;
+ const fillContactForm=(x={})=>{ document.getElementById('contactFirst').value=x.first||''; document.getElementById('contactLast').value=x.last||''; document.getElementById('contactPosition').value=x.position||''; document.getElementById('contactDepartment').value=x.department||'Executive'; document.getElementById('contactRole').value=x.role||'Primary'; document.getElementById('contactEmail').value=x.email||''; document.getElementById('contactPhone').value=x.mobile||x.phone||''; document.getElementById('contactOfficePhone').value=x.office||''; document.getElementById('contactLanguage').value=x.language||'English'; document.getElementById('contactMethod').value=x.method||'Email'; document.getElementById('contactActive').checked=(x.active||'Yes')!=='No'; };
+ const clearContactForm=()=>{ fillContactForm({role:'Primary', department:'Executive', language:'English', method:'Email', active:'Yes'}); window.tenantWizardEditContactIndex=null; const btn=document.getElementById('saveInlineContact'); if(btn) btn.textContent='Save Contact'; };
+ const renderWizardContacts=()=>{ const box=document.getElementById('wizardContactsTable'); if(!box) return; const head='<div class="data-head"><span>Full Name</span><span>Role</span><span>Email</span><span>Phone</span><span>Actions</span></div>'; if(!window.tenantWizardContacts.length){ box.innerHTML=head+'<div class="empty-state">No contacts added yet. Add at least one Primary contact.</div>'; return; } box.innerHTML=head+window.tenantWizardContacts.map((x,i)=>`<div class="data-row"><div><strong>${x.full||'—'}</strong></div><div><span>${x.role||'—'}</span></div><div><span>${x.email||'—'}</span></div><div><span>${x.mobile||x.phone||'—'}</span></div><div class="mini-row-actions"><button type="button" class="secondary-action" data-edit-wizard-contact="${i}">Edit</button><button type="button" class="danger-action" data-delete-wizard-contact="${i}">Delete</button></div></div>`).join(''); };
+ const renderWizardDocuments=()=>{ const box=document.getElementById('wizardDocumentsTable'); if(!box) return; const head='<div class="data-head"><span>Document Name</span><span>Type</span><span>Expiry</span><span>File</span><span>Actions</span></div>'; if(!window.tenantWizardDocuments.length){ box.innerHTML=head+'<div class="empty-state">No documents attached yet.</div>'; return; } box.innerHTML=head+window.tenantWizardDocuments.map((d,i)=>`<div class="data-row"><strong>${d.name}</strong><span>${d.type}</span><span>${d.expiry}</span><span>${d.file || d.name || '—'}</span><div class="mini-row-actions"><button type="button" class="danger-action" data-delete-wizard-document="${i}">Delete</button></div></div>`).join(''); };
+  document.getElementById('openTenantWizard').onclick=()=>{ window.tenantWizardContacts=[]; window.tenantWizardDocuments=[{name:'Registration Certificate', type:'Corporate', expiry:'2028-12-31', file:'Registration Certificate.pdf'},{name:'Data Processing Agreement', type:'Compliance', expiry:'2027-06-30', file:'Data Processing Agreement.pdf'}]; clearContactForm(); renderWizardContacts(); renderWizardDocuments(); modal.classList.add('open'); updateCountryRules(); toggleBusiness(); };
+  document.getElementById('closeTenantModal').onclick=()=>modal.classList.remove('open');
+  document.getElementById('tenantCountry').onchange=updateCountryRules;
+  document.getElementById('tenantEntityType').onchange=updateCountryRules;
+  document.getElementById('legalCountry').onchange=()=>applyAddressRules(document.getElementById('legalCountry').value,'legal');
+  document.getElementById('businessCountry').onchange=()=>applyAddressRules(document.getElementById('businessCountry').value,'business');
+  document.getElementById('businessSame').onchange=toggleBusiness;
+  const addContact=()=>{ const first=document.getElementById('contactFirst').value.trim(), last=document.getElementById('contactLast').value.trim(), email=document.getElementById('contactEmail').value.trim(); if(!first||!last||!email){FleetLayout.toast('Required contact fields: First Name, Last Name, Email');return;} const role=document.getElementById('contactRole').value; const editIndex=window.tenantWizardEditContactIndex; if(role==='Primary') window.tenantWizardContacts=window.tenantWizardContacts.map((x,i)=>({...x,role:x.role==='Primary'&&i!==editIndex?'Contact':x.role})); const mobile=document.getElementById('contactPhone').value.trim(); const item={ first, last, full:first+' '+last, position:document.getElementById('contactPosition').value.trim(), department:document.getElementById('contactDepartment').value, role, email, mobile, office:document.getElementById('contactOfficePhone').value.trim(), phone:mobile || document.getElementById('contactOfficePhone').value.trim() || '—', language:document.getElementById('contactLanguage').value, method:document.getElementById('contactMethod').value, active:document.getElementById('contactActive').checked?'Yes':'No' }; if(editIndex!==null && window.tenantWizardContacts[editIndex]) { window.tenantWizardContacts[editIndex]=item; FleetLayout.toast('Contact updated'); } else { window.tenantWizardContacts.push(item); FleetLayout.toast('Contact added'); } clearContactForm(); document.getElementById('inlineContactForm').classList.add('is-hidden'); renderWizardContacts(); };
+  document.getElementById('openInlineContact').onclick=()=>{ document.getElementById('inlineContactForm').classList.remove('is-hidden'); document.getElementById('contactFirst').focus(); };
+  document.getElementById('saveInlineContact').onclick=addContact;
+  document.getElementById('cancelInlineContact').onclick=()=>{ clearContactForm(); document.getElementById('inlineContactForm').classList.add('is-hidden'); };
+  document.getElementById('wizardContactsTable')?.addEventListener('click', e=>{ const edit=e.target.closest('[data-edit-wizard-contact]'); const del=e.target.closest('[data-delete-wizard-contact]'); if(edit){ const i=+edit.dataset.editWizardContact; const item=window.tenantWizardContacts[i]; if(item){ window.tenantWizardEditContactIndex=i; fillContactForm(item); document.getElementById('inlineContactForm').classList.remove('is-hidden'); document.getElementById('saveInlineContact').textContent='Update Contact'; document.getElementById('contactFirst').focus(); } return; } if(del){ const i=+del.dataset.deleteWizardContact; window.tenantWizardContacts.splice(i,1); renderWizardContacts(); FleetLayout.toast('Contact deleted'); } });
+  document.getElementById('tenantDocUploadAction')?.addEventListener('click', ()=>document.getElementById('tenantDocUpload')?.click());
+  document.getElementById('wizardDocumentsTable')?.addEventListener('click', e=>{ const del=e.target.closest('[data-delete-wizard-document]'); if(!del) return; window.tenantWizardDocuments.splice(+del.dataset.deleteWizardDocument,1); renderWizardDocuments(); FleetLayout.toast('Document removed'); });
+
+    const docUpload=document.getElementById('tenantDocUpload'); if(docUpload) docUpload.onchange=()=>{ const files=[...docUpload.files]; if(files.length){ files.forEach(f=>window.tenantWizardDocuments.push({name:f.name, type:f.name.toLowerCase().endsWith('.pdf')?'PDF':'Uploaded', expiry:'Not set', file:f.name})); } renderWizardDocuments(); FleetLayout.toast('Tenant documents selected'); };
+  rails.forEach(r=>r.onclick=()=>show(+r.dataset.step)); document.getElementById('prevTenantStep').onclick=()=>show(step-1); document.getElementById('nextTenantStep').onclick=e=>{e.preventDefault(); show(step+1); FleetLayout.toast(`Saved: ${rails[step]?.innerText.replace(/\n/g,' ')||'step'}`)};
+  const filter=()=>{ const q=document.getElementById('tenantSearch').value.toLowerCase(), st=document.getElementById('tenantStatus').value; const rows=getTenants().filter(c=>(st==='All Statuses'||c.status===st)&&`${c.name} ${c.legal} ${c.country} ${c.tax} ${c.registration}`.toLowerCase().includes(q)); document.getElementById('tenantTable').innerHTML=tenantRows(rows); }; document.getElementById('tenantSearch').oninput=filter; document.getElementById('tenantStatus').onchange=filter; document.getElementById('tenantTable').onclick=e=>{ const row=e.target.closest('.data-row'); if(!row)return; const id=row.dataset.id; const a=e.target.closest('button')?.dataset.action; localStorage.setItem('fleetos_selected_tenant',id); const c=getTenants().find(x=>x.id===id); if(a==='integrate'){ localStorage.setItem('fleetos_integration_tenant', c.name); location.href='integrations.html'; } else location.href='tenant-detail.html'; };
+  document.getElementById('saveTenant').onclick=e=>{ e.preventDefault(); const form=document.getElementById('tenantForm'); const fd=new FormData(form); if(!fd.get('name')||!fd.get('legal')||!fd.get('tax')){FleetLayout.toast('Required: Tenant Name, Legal Name, Tax ID / VAT Number');return;} const contacts=(window.tenantWizardContacts&&window.tenantWizardContacts.length?window.tenantWizardContacts:[{full:'Primary Contact', role:'Primary', email:'primary@example.com', phone:'—'}]); const c={ id:genId(), entityType:fd.get('entityType')||'Legal Entity', code:genCode(), name:fd.get('name'), legal:fd.get('legal'), trade:fd.get('trade')||fd.get('name'), displayName:fd.get('displayName')||fd.get('trade')||fd.get('name'), registration:fd.get('registration')||'Pending', tax:fd.get('tax'), status:fd.get('status'), types:[fd.get('type')], country:fd.get('legalCountry')||fd.get('country'), profileCountry:fd.get('country'), region:fd.get('region')||'—', city:fd.get('city')||'—', address:fd.get('address')||'—', building:fd.get('building')||'', postal:fd.get('postal')||'', businessSame:!!fd.get('businessSame'), businessCountry:fd.get('businessCountry')||fd.get('country'), businessRegion:fd.get('businessRegion')||fd.get('region')||'', businessCity:fd.get('businessCity')||fd.get('city')||'', businessAddress:fd.get('businessAddress')||fd.get('address')||'', businessPostal:fd.get('businessPostal')||fd.get('postal')||'', plants:0, devices:0, users:0, revenue:'—', health:'Attention Required', integrations:0, alerts:0, industry:fd.get('industry')||'Solar Energy', businessCategory:fd.get('businessCategory')||'Enterprise', parentCompany:fd.get('parentCompany')||'None', employees:fd.get('employees')||'—', annualRevenue:fd.get('annualRevenue')||'—', webplant:fd.get('webplant')||'—', category:fd.get('category')||'Standard', tier:fd.get('tier')||'Bronze', priority:fd.get('priority')||'Medium', risk:fd.get('risk')||'Low', source:fd.get('source')||'Direct', account:fd.get('account')||'Unassigned', language:fd.get('language')||'English', timezone:fd.get('timezone')||tenantCountryRules[fd.get('country')].timezone, channel:fd.get('channel')||'Email', businessHours:fd.get('businessHours')||'09:00–18:00', platformNotifications:fd.get('platformNotifications')||'Yes', serviceNotifications:fd.get('serviceNotifications')||'Yes', invoiceNotifications:fd.get('invoiceNotifications')||'Yes', securityNotifications:fd.get('securityNotifications')||'Yes', notificationRecipients:fd.get('notificationRecipients')||'Primary', dpa:fd.get('dpa')||'Not Signed', nda:fd.get('nda')||'Not Signed', compliance:fd.get('compliance')||'Pending', confidentiality:fd.get('confidentiality')||'Standard', controllerType:fd.get('controllerType')||'Controller', consent:fd.get('consent')||'Active', consentExpiry:fd.get('consentExpiry')||'2027-12-31', setup:84, contacts, documents:(window.tenantWizardDocuments&&window.tenantWizardDocuments.length?window.tenantWizardDocuments:[{name:'Registration Certificate', type:'Corporate', expiry:'2028-12-31', file:'Registration Certificate.pdf'}]), notes:{general:fd.get('general_information_notes')||'', address:fd.get('address_information_notes')||'', contacts:fd.get('contact_persons_notes')||'', classification:fd.get('tenant_classification_notes')||'', communication:fd.get('communication_preferences_notes')||'', legal:fd.get('legal_compliance_notes')||''}, created:new Date().toISOString().slice(0,10), updated:new Date().toISOString().slice(0,10)}; const rows=getTenants(); rows.unshift(c); saveTenants(rows); localStorage.setItem('fleetos_selected_tenant',c.id); modal.classList.remove('open'); FleetLayout.toast('Tenant created. Open Tenant Detail.'); setTimeout(()=>location.href='tenant-detail.html',600); };
+  updateCountryRules(); toggleBusiness();
+}
+
+function renderTenantDetail(){
+  const c=selectedTenant();
+  return `<section class="page-hero"><div><p class="eyebrow">Tenant Detail · ${c.entityType || 'Legal Entity'}</p><h1>${c.name}</h1><p class="muted">${c.legal} · ${c.country}, ${c.city} · ${c.code}</p></div><button class="freshness-card" id="connectFirstIntegration"><span class="pulse"></span><div><strong>Connect First Integration</strong><small>Vendor → credentials → discovery</small></div></button></section>
+  <section class="kpi-grid detail-kpis"><article class="kpi-card"><span>Status</span><strong>${tenantStatusValue(c)}</strong><small>${tenantComplianceValue(c)}</small></article><article class="kpi-card"><span>Setup Progress</span><strong>${c.setup || 0}%</strong><small>6 documented areas</small></article><article class="kpi-card"><span>Country</span><strong>${c.country}</strong><small>${c.region || c.city}</small></article><article class="kpi-card"><span>Entity Type</span><strong>${c.entityType || 'Legal Entity'}</strong><small>${(c.types||[]).join(', ')}</small></article><article class="kpi-card"><span>Contacts</span><strong>${(c.contacts||[]).length}</strong><small>tenant records</small></article><article class="kpi-card"><span>Managed Plants</span><strong>${tenantAssignedPlants(c).length}</strong><small>Tenant → Client → Plant hierarchy</small></article><article class="kpi-card"><span>Risk</span><strong>${c.risk || '—'}</strong><small>${c.priority || '—'} priority</small></article></section>
+  <section class="client-layout-v17 detail-layout-standard">
+    <aside class="glass-card client-side-card-v17">
+      <h3>Tenant Navigation</h3>
+      <button class="active" data-tenant-tab="general">General Information</button>
+      <button data-tenant-tab="address">Address Information</button>
+      <button data-tenant-tab="contacts">Contact Persons</button>
+      <button data-tenant-tab="classification">Tenant Classification</button>
+      <button data-tenant-tab="communication">Communication Preferences</button>
+      <button data-tenant-tab="legal">Legal & Compliance</button>
+      <button data-tenant-tab="plants">Managed Plants</button>
+    </aside>
+    <section class="glass-card client-main-card-v17">
+      <div class="detail-content-head-v32"><div><h2 id="tenantDetailTitle">General Information</h2><p class="muted">Tenant governance data is shown in the same left-navigation pattern as Client Detail.</p></div><div class="detail-tab-actions"><button id="editTenantTab" class="small-btn primary" type="button">Edit</button><button id="cancelTenantEdit" class="small-btn ghost hidden" type="button">Cancel</button><button id="saveTenantEdit" class="small-btn success hidden" type="button">Save Changes</button></div></div>
+      <div id="detailContent">${detailTab(c,'general')}</div>
+    </section>
+  </section>`;
+}
+
+function tenantTabLabel(tab){
+  return ({general:'General Information',address:'Address Information',contacts:'Contact Persons',classification:'Tenant Classification',communication:'Communication Preferences',legal:'Legal & Compliance',plants:'Managed Plants'})[tab] || 'Tenant Detail';
+}
+function info(items){ return tenantInfo(items, tenantDetailEditMode); }
+function tenantContactTable(c, editable = tenantDetailEditMode){
+  const head = '<div class="data-head"><span>First Name</span><span>Last Name</span><span>Position</span><span>Department</span><span>Contact Role</span><span>Email</span><span>Mobile Phone</span><span>Office Phone</span><span>Preferred Language</span><span>Preferred Contact Method</span><span>Active</span></div>';
+  const rows = (c.contacts||[]).map((x,i)=>`<div class="data-row tenant-contact-wide-row">
+    <div>${editable ? tenantEditableControl(`contacts::${i}::first`, x.first || (x.full||'').split(' ')[0] || '', 'First Name') : `<strong>${x.first || (x.full||'').split(' ')[0] || '—'}</strong>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::last`, x.last || (x.full||'').split(' ').slice(1).join(' ') || '', 'Last Name') : `<span>${x.last || (x.full||'').split(' ').slice(1).join(' ') || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::position`, x.position, 'Position') : `<span>${x.position || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::department`, x.department, 'Department') : `<span>${x.department || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::role`, x.role, 'Contact Role') : `<span>${x.role || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::email`, x.email, 'Email') : `<span>${x.email || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::mobile`, x.mobile||x.phone, 'Mobile Phone') : `<span>${x.mobile||x.phone || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::office`, x.office, 'Office Phone') : `<span>${x.office || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::language`, x.language, 'Preferred Language') : `<span>${x.language || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::method`, x.method, 'Preferred Contact Method') : `<span>${x.method || '—'}</span>`}</div>
+    <div>${editable ? tenantEditableControl(`contacts::${i}::active`, x.active || 'Yes', 'Active') : `<span>${x.active || 'Yes'}</span>`}</div>
+  </div>`).join('');
+  return `<div class="data-table tenant-contact-table wide-scroll-table ${editable ? 'editing-grid' : ''}">${head}${rows || '<div class="empty-state">No contact persons added.</div>'}</div>${tenantNotesBlock(c,'contacts','Notes for Contact Person', editable)}`;
+}
+function tenantDocumentsTable(c, editable = tenantDetailEditMode){
+  return `<div class="data-table compact-table tenant-document-table ${editable ? 'editing-grid' : ''}"><div class="data-head"><span>Document Name</span><span>Type</span><span>Expiry Date</span><span>Document File</span></div>${(c.documents||[]).map((d,i)=>`<div class="data-row"><div>${editable ? tenantEditableControl(`documents::${i}::name`, d.name, 'Document Name') : `<strong>${d.name || '—'}</strong>`}</div><div>${editable ? tenantEditableControl(`documents::${i}::type`, d.type, 'Type') : `<span>${d.type || '—'}</span>`}</div><div>${editable ? tenantEditableControl(`documents::${i}::expiry`, d.expiry, 'Expiry Date') : `<span>${d.expiry || '—'}</span>`}</div><div>${editable ? tenantEditableControl(`documents::${i}::file`, d.file || d.name, 'Document File') : `<span>${d.file || d.name || '—'}</span>`}</div></div>`).join('') || '<div class="empty-state">No documents attached.</div>'}</div>`;
+}
+function detailTab(c,t, editable = tenantDetailEditMode){
+  if(t==='address') return `${tenantInfo([['Legal Country',c.country,'country'],['Legal State / Region',c.region,'region'],['Legal City',c.city,'city'],['Legal Street Address',c.address,'address'],['Legal Building Number',c.building,'building'],['Legal Postal Code',c.postal,'postal'],['Business Address Same as Legal',c.businessSame?'Yes':'No','businessSame'],['Business Address Country',c.businessSame?c.country:c.businessCountry,'businessCountry'],['Business Address State / Region',c.businessSame?c.region:c.businessRegion,'businessRegion'],['Business Address City',c.businessSame?c.city:c.businessCity,'businessCity'],['Business Address Street Address',c.businessSame?c.address:c.businessAddress,'businessAddress'],['Business Address Postal Code',c.businessSame?c.postal:c.businessPostal,'businessPostal']], editable)}${tenantNotesBlock(c,'address','Notes for Address Information', editable)}`;
+  if(t==='contacts') return tenantContactTable(c, editable);
+  if(t==='plants') return `<div class="section-title-v17 tenant-assigned-head-v28"><div><h2>Managed Plants</h2><p class="muted">Tenant-managed plant hierarchy is shown here for context. Plant creation now lives in the global Plants section.</p></div><div class="section-actions-v28"><button class="small-btn" type="button" onclick="location.href='plants.html'">Open Plants</button></div></div>${tenantPlantSummaryCards(c)}`;
+  if(t==='classification') return `${tenantInfo([['Tenant Category',c.category,'category'],['Account Tier',c.tier,'tier'],['Tenant Priority',c.priority,'priority'],['Risk Category',c.risk,'risk'],['Acquisition Source',c.source,'source']], editable)}${tenantNotesBlock(c,'classification','Notes for Tenant Classification', editable)}`;
+  if(t==='communication') return `${tenantInfo([['Preferred Language',c.language,'language'],['Preferred Time Zone',c.timezone,'timezone'],['Preferred Communication Channel',c.channel,'channel'],['Business Hours',c.businessHours,'businessHours'],['Receive Platform Notifications',c.platformNotifications,'platformNotifications'],['Receive Service Notifications',c.serviceNotifications,'serviceNotifications'],['Receive Invoice Notifications',c.invoiceNotifications,'invoiceNotifications'],['Receive Security Notifications',c.securityNotifications,'securityNotifications'],['Notification Recipients',c.notificationRecipients,'notificationRecipients']], editable)}${tenantNotesBlock(c,'communication','Notes for Communication Preferences', editable)}`;
+  if(t==='legal') return `${tenantInfo([['Data Processing Agreement',c.dpa,'dpa'],['NDA Status',c.nda,'nda'],['Compliance Status',tenantComplianceValue(c),'compliance'],['Confidentiality Level',c.confidentiality,'confidentiality'],['Data Controller Type',c.controllerType,'controllerType'],['Consent Status',c.consent,'consent'],['Consent Expiry Date',c.consentExpiry,'consentExpiry']], editable)}${tenantNotesBlock(c,'legal','Notes for Legal & Compliance', editable)}${tenantDocumentsTable(c, editable)}`;
+  const isIndividual=(c.entityType||'Legal Entity')==='Individual';
+  const base=[['Tenant ID',c.id],['Tenant Code',c.code],['Entity Type',c.entityType||'Legal Entity','entityType'],[isIndividual?'Tenant Display Name':'Tenant Name',c.name,'name'],[isIndividual?'Full Legal Name':'Legal Name',c.legal,'legal'],[isIndividual?'Individual Display Name / Alias':'Trade Name',c.trade,'trade'],['Display Name',c.displayName || c.trade || c.name,'displayName'],[isIndividual?'Personal ID / Passport Number':'Registration Number',c.registration,'registration'],[isIndividual?'Tax ID / SSN / ITIN':'Tax ID / VAT Number',c.tax,'tax'],['Tenant Status',tenantStatusValue(c),'status'],['Tenant Type',(c.types||[]).join(', '),'types'],['Account Manager',c.account,'account']];
+  const org=[['Industry Sector',c.industry,'industry'],['Business Category',c.businessCategory,'businessCategory'],['Parent Company',c.parentCompany,'parentCompany'],['Number of Employees',c.employees,'employees'],['Annual Revenue Range',c.annualRevenue,'annualRevenue'],['Website',c.webplant,'webplant'],['Creation Date',c.created,'created'],['Modification Date',c.updated,'updated']];
+  return `${tenantInfo(isIndividual?base.concat([['Creation Date',c.created,'created'],['Modification Date',c.updated,'updated']]):base.concat(org), editable)}${tenantNotesBlock(c,'general','Notes for General Information', editable)}`;
+}
+function wireTenantDetail(){ const c=selectedTenant(); document.getElementById('connectFirstIntegration').onclick=()=>{ localStorage.setItem('fleetos_integration_tenant',c.name); location.href='integrations.html'; }; document.querySelectorAll('[data-tenant-tab]').forEach(b=>b.onclick=()=>{ document.querySelectorAll('[data-tenant-tab]').forEach(x=>x.classList.remove('active')); b.classList.add('active'); const title=document.getElementById('tenantDetailTitle'); if(title) title.textContent=tenantTabLabel(b.dataset.tenantTab); setTenantDetailEditMode(false); });
+ document.getElementById('editTenantTab')?.addEventListener('click', () => setTenantDetailEditMode(true));
+ document.getElementById('cancelTenantEdit')?.addEventListener('click', () => setTenantDetailEditMode(false));
+ document.getElementById('saveTenantEdit')?.addEventListener('click', saveTenantDetailEdits);
+ const detail = document.getElementById('detailContent');
+ detail?.addEventListener('click', e => {
+   if (e.target.closest('[data-open-tenant-plant-builder]')) { openTenantPlantBuilder(); return; }
+   if (e.target.closest('[data-close-tenant-plant-builder]')) { closeTenantPlantBuilder(); return; }
+   if (e.target.closest('[data-builder-next]')) { setTenantBuilderStep(tenantPlantBuilderStepV28 + 1); return; }
+   if (e.target.closest('[data-builder-prev]')) { setTenantBuilderStep(tenantPlantBuilderStepV28 - 1); return; }
+   const stepButton = e.target.closest('[data-builder-step]');
+   if (stepButton) { setTenantBuilderStep(Number(stepButton.dataset.builderStep)); return; }
+   if (e.target.closest('[data-add-builder-device]')) { const item = builderSelectedCatalogItem(); if (!item) { FleetLayout.toast('Select a compatible model first'); return; } if (item) { tenantPlantBuilderDevicesV28.push({...item, role: item.kind === 'Meter' ? 'Grid / POI' : item.kind === 'BESS' || item.kind === 'PCS' ? 'Linked to BESS' : item.kind === 'Weather Station' ? 'Weather context' : item.kind === 'Logger' ? 'Plant-level device' : 'Plant-level device'}); renderTenantBuilderDeviceRows(); } return; }
+   const removeBtn = e.target.closest('[data-remove-builder-device]');
+   if (removeBtn) { tenantPlantBuilderDevicesV28.splice(Number(removeBtn.dataset.removeBuilderDevice), 1); renderTenantBuilderDeviceRows(); return; }
+   if (e.target.closest('[data-create-tenant-plant]')) { createTenantPlantFromBuilder(); return; }
+   const plantTarget = e.target.closest('[data-plant]');
+   if (!plantTarget || typeof FleetClientModel === 'undefined') return;
+   const clientId = plantTarget.dataset.client || tenantClientRecord(selectedTenant())?.id;
+   if (clientId) FleetClientModel.selectClient(clientId);
+   FleetClientModel.selectPlant(plantTarget.dataset.plant);
+   location.href = 'plant-detail.html';
+ });
+ detail?.addEventListener('change', e => {
+   if (e.target?.id === 'builderDeviceKindV28') { const model = document.getElementById('builderDeviceModelV28'); if (model) model.innerHTML = tenantPlantBuilderModelOptions(e.target.value); renderTenantBuilderCompatibilityHint(); return; }
+   const field = e.target?.dataset?.builderField;
+   if (field) { const row = e.target.closest('[data-builder-device-row]'); if (row) { tenantPlantBuilderDevicesV28[Number(row.dataset.builderDeviceRow)][field] = e.target.value; renderTenantBuilderReview(); } }
+ });
+ detail?.addEventListener('input', e => {
+   const field = e.target?.dataset?.builderField;
+   if (field) { const row = e.target.closest('[data-builder-device-row]'); if (row) tenantPlantBuilderDevicesV28[Number(row.dataset.builderDeviceRow)][field] = e.target.value; }
+   if (e.target.closest('#tenantPlantBuilderFormV28')) renderTenantBuilderReview();
+ });
+}
+
+
+document.addEventListener('DOMContentLoaded',()=>{const s=document.createElement('style');s.textContent='.document-head-actions{display:flex;align-items:center;justify-content:space-between;gap:8px}.table-add-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border-color,#d0d7de);background:var(--card-bg,#fff);cursor:pointer;font-size:16px;line-height:1;display:inline-flex;align-items:center;justify-content:center}';document.head.appendChild(s);});

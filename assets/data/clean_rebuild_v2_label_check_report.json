@@ -1,0 +1,78 @@
+{
+  "version": "clean-rebuild-v2-label-check",
+  "source_dictionaries": {
+    "ui_field_dictionary_fields": 515,
+    "ui_screens": 19,
+    "screen_field_references": 708,
+    "canonical_alerts": 28,
+    "vendor_alert_mappings": 844
+  },
+  "rules": [
+    "If a label exists in FleetOS UI Field Dictionary, use dictionary wording.",
+    "If a business field is not present in normalization, keep existing label and flag it for later review."
+  ],
+  "updated_files": [
+    "assets/js/overview.js",
+    "assets/css/styles.css",
+    "assets/js/tenants.js",
+    "assets/js/plants.js",
+    "assets/js/client-hierarchy.js"
+  ],
+  "kept_not_in_normalization": [
+    {
+      "label": "Grid Connection Capacity",
+      "location": "assets/js/plants.js / plant technical characteristics",
+      "reason": "No matching field_key/ui_label found in FleetOS_UI_Field_Dictionary_v1.json. Existing business field was preserved as requested."
+    }
+  ],
+  "aligned_label_examples": [
+    {
+      "from": "DC Capacity",
+      "to": "Installed Capacity DC"
+    },
+    {
+      "from": "AC Capacity",
+      "to": "Installed Capacity AC"
+    },
+    {
+      "from": "PV Capacity (kWp)",
+      "to": "Installed Capacity (kWp)"
+    },
+    {
+      "from": "Capacity (kWp)",
+      "to": "Installed Capacity (kWp)"
+    },
+    {
+      "from": "Today",
+      "to": "Today Energy"
+    },
+    {
+      "from": "Now",
+      "to": "Current Power"
+    },
+    {
+      "from": "Capacity DC",
+      "to": "Installed Capacity DC"
+    },
+    {
+      "from": "Capacity AC",
+      "to": "Installed Capacity AC"
+    },
+    {
+      "from": "Time Zone",
+      "to": "Timezone"
+    },
+    {
+      "from": "External Plant ID",
+      "to": "Source Plant ID"
+    },
+    {
+      "from": "Registration No.",
+      "to": "Registration Number"
+    },
+    {
+      "from": "Confirm Status",
+      "to": "Confirmation Status"
+    }
+  ]
+}
